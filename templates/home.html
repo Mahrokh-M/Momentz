@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Momentz - Home{% endblock %}
+
+{% block content %}
+    <h1>Your Feed</h1>
+    {% for post in posts %}
+        <div>
+            <!-- Adjust fields based on UserFeedView columns -->
+            <p>{{ post }}</p>
+        </div>
+    {% empty %}
+        <p>No posts available.</p>
+    {% endfor %}
+{% endblock %}
