@@ -660,7 +660,7 @@ BEGIN
         RAISERROR ('Invalid receiver ID.', 16, 1);
         RETURN;
     END;
-    IF @content IS NULL OR LEN(@content) = 0
+    IF @content IS NULL OR DATALENGTH(@content) = 0
     BEGIN
         RAISERROR ('Message content cannot be empty.', 16, 1);
         RETURN;
