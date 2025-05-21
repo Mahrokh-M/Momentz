@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.conf.urls.static import static
 from django.urls import path, include
 
 urlpatterns = [
@@ -8,3 +9,4 @@ urlpatterns = [
     path("messages/", include("messaging.urls")),
     path("notifications/", include("notifications.urls")),
 ]
+

@@ -1,18 +1,29 @@
-# users/auth.py
 from django.contrib.auth.backends import BaseBackend
-from django.db import connection
 from django.contrib.auth.hashers import check_password
+from django.db import connection
 from .models import User
 
-
-class SQLServerBackend(BaseBackend):
+class SQLServerAuthBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         try:
-            user = User.objects.get(email=username)
-            if check_password(password, user.password_hash):
-                return user
-        except User.DoesNotExist:
-            return None
+            with connection.cursor() as cursor:
+                # Only check username (removed email check)
+                cursor.execute(
+                    "SELECT user_id, password_hash FROM Users WHERE username = %s", 
+                    [username]
+                )
+                row = cursor.fetchone()
+                
+                if row:
+                    user_id, db_password = row
+                    if check_password(password, db_password):
+                        user = User.objects.get(user_id=user_id)
+                        # Prevent last_login update
+                        user.save(update_fields=[])
+                        return user
+        except Exception as e:
+            print(f"Auth error: {e}")
+        return None
 
     def get_user(self, user_id):
         try:

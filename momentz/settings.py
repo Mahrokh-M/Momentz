@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 from decouple import config
+from django.contrib.auth import get_user_model
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -67,6 +68,7 @@ TEMPLATES = [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
+                 'django.template.context_processors.static',
                 "django.contrib.messages.context_processors.messages",
             ],
         },
@@ -85,7 +87,7 @@ DATABASES = {
         "NAME": "momentz_db",
         "USER": "",
         "PASSWORD": "",
-        "HOST": "localhost\SQLEXPRESS",
+        "HOST": r"localhost\SQLEXPRESS",
         # 'PORT':'',                   # Can be removed
         "OPTIONS": {
             "driver": "ODBC Driver 17 for SQL Server",
@@ -134,3 +136,19 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'login'
+
+DONT_UPDATE_LAST_LOGIN = True
+
+
+
+AUTH_USER_MODEL = 'users.User'
+
+AUTHENTICATION_BACKENDS = [
+    'users.auth.SQLServerAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]

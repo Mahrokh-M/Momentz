@@ -1,0 +1,23 @@
+.profile-picture {
+    object-fit: cover;
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.post-stats {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.comment {
+    border-left: 3px solid #dee2e6;
+    padding-left: 10px;
+}
+
+.profile-stats span {
+    margin-right: 15px;
+}

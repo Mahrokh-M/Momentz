@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Momentz - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="create-post mb-4">
+            <a href="{% url 'create_post' %}" class="btn btn-primary btn-block">Create Post</a>
+        </div>
+        
+        {% for post in posts %}
+        <div class="card mb-4">
+            {% if post.image_url %}
+            <img src="{{ post.image_url }}" class="card-img-top" alt="Post image">
+            {% endif %}
+            <div class="card-body">
+                <div class="post-header mb-3">
+                    <img src="{{ post.author_picture_url|default:'/static/images/default-profile.png' }}" 
+                         class="rounded-circle" width="40" height="40">
+                    <a href="{% url 'profile' post.author_username %}" class="ml-2">{{ post.author_full_name }}</a>
+                </div>
+                <p class="card-text">{{ post.content }}</p>
+                <div class="post-stats mb-3">
+                    <span class="text-muted">{{ post.like_count }} likes</span>
+                    <span class="text-muted">{{ post.comment_count }} comments</span>
+                    <span class="text-muted">{{ post.created_at|date:"F j, Y" }}</span>
+                </div>
+                <div class="post-actions">
+                    <a href="{% url 'post_detail' post.post_id %}" class="btn btn-sm btn-outline-primary">View Post</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="alert alert-info">No posts available. Follow more users to see their posts.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
