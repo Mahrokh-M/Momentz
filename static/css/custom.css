@@ -21,3 +21,34 @@
 .profile-stats span {
     margin-right: 15px;
 }
+
+/* Profile header styles */
+.profile-header {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.profile-picture {
+    object-fit: cover;
+}
+
+.profile-stats span {
+    margin-right: 15px;
+}
+
+/* Follow button styles */
+.btn-follow {
+    transition: all 0.3s;
+}
+
+/* Post grid styles */
+.profile-posts .card {
+    margin-bottom: 20px;
+    transition: transform 0.3s;
+}
+
+.profile-posts .card:hover {
+    transform: translateY(-5px);
+}

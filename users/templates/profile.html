@@ -22,7 +22,11 @@
                 <form action="{% url 'follow_user' profile.user_id %}" method="post" class="mt-2">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-{% if is_following %}secondary{% else %}primary{% endif %}">
-                        {% if is_following %}Following{% else %}Follow{% endif %}
+                        {% if is_following %}
+                            <i class="fas fa-user-minus"></i> Following
+                        {% else %}
+                            <i class="fas fa-user-plus"></i> Follow
+                        {% endif %}
                     </button>
                 </form>
             {% endif %}
