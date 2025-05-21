@@ -19,11 +19,12 @@
                 <span><strong>{{ profile.following_count }}</strong> following</span>
             </div>
             {% if request.user.username != profile.username %}
-                <form action="{% url 'follow_user' profile.user_id %}" method="post" class="mt-2">
+                <form action="{% url 'follow_user' profile.user_id %}" method="post">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-{% if is_following %}secondary{% else %}primary{% endif %}">
+                    <input type="hidden" name="username" value="{{ profile.username }}">
+                    <button type="submit" class="btn btn-{% if is_following %}outline-danger{% else %}primary{% endif %}">
                         {% if is_following %}
-                            <i class="fas fa-user-minus"></i> Following
+                            <i class="fas fa-user-minus"></i> Unfollow
                         {% else %}
                             <i class="fas fa-user-plus"></i> Follow
                         {% endif %}

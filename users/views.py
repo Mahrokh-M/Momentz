@@ -148,37 +148,40 @@ def register_view(request):
 def logout_view(request):
     auth_logout(request)
     return redirect('login')
-
-
 @login_required
 def follow_user(request, user_id):
     if request.method == 'POST':
         try:
-            username = request.POST.get('username')
             with connection.cursor() as cursor:
-                # Check follow status
+                # Check if already following using your IsFollowing function
                 cursor.execute("SELECT dbo.IsFollowing(%s, %s) AS is_following", 
-                              [request.user.user_id, user_id])
+                             [request.user.user_id, user_id])
                 is_following = cursor.fetchone()[0]
                 
                 if is_following:
-                    # Unfollow
-                    cursor.execute("DELETE FROM Followers WHERE follower_user_id = %s AND following_user_id = %s",
-                                 [request.user.user_id, user_id])
-                    messages.success(request, f"You unfollowed {username}")
+                    # UNFOLLOW LOGIC
+                    cursor.execute("""
+                        DELETE FROM Followers 
+                        WHERE follower_user_id = %s AND following_user_id = %s
+                    """, [request.user.user_id, user_id])
+                    messages.success(request, "Successfully unfollowed user")
                 else:
-                    # Follow
-                    cursor.execute("EXEC sp_FollowUser %s, %s", [request.user.user_id, user_id])
-                    messages.success(request, f"You are now following {username}")
+                    # FOLLOW LOGIC (using your existing sp_FollowUser)
+                    cursor.execute("EXEC sp_FollowUser %s, %s", 
+                                 [request.user.user_id, user_id])
+                    messages.success(request, "Successfully followed user")
+                
+                # Update the follow status immediately for the template
+                cursor.execute("SELECT dbo.IsFollowing(%s, %s) AS is_following", 
+                             [request.user.user_id, user_id])
+                is_following = cursor.fetchone()[0]
                 
         except Exception as e:
             messages.error(request, f"Error: {str(e)}")
         
-        # Redirect back to where the request came from
         return redirect(request.META.get('HTTP_REFERER', 'home'))
     
     return redirect('home')
-
 @login_required
 def discover_users(request):
     try:
