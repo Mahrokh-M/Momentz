@@ -10,5 +10,6 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("follow/<int:user_id>/", views.follow_user, name="follow_user"),
     path("discover/", views.discover_users, name="discover_users"),
+    path("create/", views.create_post, name="create_post"),
 ]
 

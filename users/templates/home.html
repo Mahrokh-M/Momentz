@@ -5,6 +5,14 @@
 {% block content %}
 <div class="row">
     <div class="col-md-8 mx-auto">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
         <div class="create-post mb-4">
             <a href="{% url 'create_post' %}" class="btn btn-primary btn-block">Create Post</a>
         </div>
@@ -14,16 +22,7 @@
             {% if post.image_url %}
             <img src="{{ post.image_url }}" class="card-img-top" alt="Post image">
             {% endif %}
-            {% if not posts and following_count == 0 %}
-                <div class="alert alert-info">
-                    You're not following anyone yet. 
-                    <a href="{% url 'discover_users' %}" class="alert-link">Discover users</a> to see their posts!
-                </div>
-                {% elif not posts %}
-                <div class="alert alert-info">
-                    The users you follow haven't posted anything yet.
-                </div>
-            {% endif %}
+            
             <div class="card-body">
                 <div class="post-header mb-3">
                     <img src="{{ post.author_picture_url|default:'/static/images/default-profile.png' }}" 
@@ -42,10 +41,31 @@
             </div>
         </div>
         {% empty %}
-        <div class="alert alert-info">No posts available. Follow more users to see their posts.</div>
+        <div class="alert alert-info">
+            {% if following_count == 0 %}
+                You're not following anyone yet. 
+                <a href="{% url 'discover_users' %}" class="alert-link">Discover users</a> to see their posts!
+            {% else %}
+                The users you follow haven't posted anything yet.
+            {% endif %}
+        </div>
         {% endfor %}
     </div>
 </div>
+
+<!-- Debugging output (remove in production) -->
+{% if debug and post_dict %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Debug Information</h5>
+            </div>
+            <div class="card-body">
+                <pre>{{ post_dict }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
-
-

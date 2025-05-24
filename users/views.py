@@ -13,25 +13,29 @@ from .models import User
 def home(request):
     try:
         with connection.cursor() as cursor:
-            cursor.execute("EXEC GetUserFeed %s", [request.user.user_id])
+            cursor.execute("""
+                SELECT P.post_id, P.content, P.image_url, P.created_at,
+                       U.user_id AS author_id, U.username AS author_username,
+                       U.full_name AS author_full_name, U.picture_url AS author_picture_url,
+                       (SELECT COUNT(*) FROM Likes L WHERE L.post_id = P.post_id) AS like_count,
+                       (SELECT COUNT(*) FROM Comments C WHERE C.post_id = P.post_id) AS comment_count
+                FROM Posts P
+                JOIN Users U ON P.user_id = U.user_id
+                JOIN Followers F ON F.following_user_id = P.user_id
+                WHERE F.follower_user_id = %s
+                ORDER BY P.created_at DESC
+            """, [request.user.user_id])
+            
             columns = [col[0] for col in cursor.description]
             posts = [dict(zip(columns, row)) for row in cursor.fetchall()]
             
-            # Check if user follows anyone
-            cursor.execute("SELECT COUNT(*) FROM Followers WHERE follower_user_id = %s", [request.user.user_id])
-            following_count = cursor.fetchone()[0]
-            
-        if not posts and following_count == 0:
-            messages.info(request, "You're not following anyone yet. Discover users to see their posts!")
-            
         return render(request, "home.html", {
             "posts": posts,
-            "following_count": following_count
+            "post_dict": posts[0] if posts else None  # For debugging
         })
     except Exception as e:
         messages.error(request, f"Error loading feed: {str(e)}")
         return render(request, "home.html", {"posts": []})
-
 @login_required
 def profile(request, username):
     try:
@@ -202,3 +206,32 @@ def discover_users(request):
     except Exception as e:
         messages.error(request, f"Error loading users: {str(e)}")
         return redirect('home')
+    
+
+@login_required
+def create_post(request):
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        image_url = request.POST.get('image_url', None)
+        
+        if not content:
+            messages.error(request, "Content is required")
+            return render(request, "create_post.html")
+        
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO Posts (user_id, content, image_url, created_at) "
+                    "VALUES (%s, %s, %s, GETDATE())",
+                    [request.user.user_id, content, image_url]
+                )
+                messages.success(request, "Post created successfully!")
+                return redirect('home')
+        except Exception as e:
+            messages.error(request, f"Error creating post: {str(e)}")
+            return render(request, "create_post.html", {
+                'content': content,
+                'image_url': image_url
+            })
+    
+    return render(request, "create_post.html")

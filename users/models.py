@@ -25,25 +25,11 @@ class User(AbstractBaseUser):
     created_at = models.DateTimeField(default=timezone.now, db_column="created_at")
     last_login = models.DateTimeField(null=True, blank=True, db_column="last_login")
     
-    def save(self, *args, **kwargs):
-        # Prevent last_login from being automatically updated
-        if 'update_fields' in kwargs and 'last_login' in kwargs['update_fields']:
-            kwargs['update_fields'].remove('last_login')
-        super().save(*args, **kwargs)
-    
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
     
     objects = UserManager()
-    
-    class Meta:
-        db_table = "Users"
-        managed = False
 
-    def __str__(self):
-        return self.username
-    
-    # Map Django's password field to your password_hash
     @property
     def password(self):
         return self.password_hash
@@ -55,8 +41,16 @@ class User(AbstractBaseUser):
     def check_password(self, raw_password):
         return check_password(raw_password, self.password_hash)
     
-    # Disable last_login updates
     def save(self, *args, **kwargs):
+        # Prevent last_login from being automatically updated
         if 'update_fields' in kwargs and 'last_login' in kwargs['update_fields']:
             kwargs['update_fields'].remove('last_login')
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.username
+    
+
+    class Meta:
+        db_table = "Users"  # Match your actual table name in SQL Server
+        managed = False 

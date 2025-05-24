@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db import connection
 from django import forms
-from .models import Post, Like, Comment, PostEngagement
+from .models import Post, Like, Comment
 
 
 class PostForm(forms.ModelForm):
@@ -9,36 +9,27 @@ class PostForm(forms.ModelForm):
         model = Post
         fields = ["user", "content", "image_url"]
 
+from django.contrib import admin
+from django.db import connection
+from django import forms
+from .models import Post, Like, Comment
 
 class PostAdmin(admin.ModelAdmin):
     list_display = ("post_id", "user", "content", "created_at")
     search_fields = ("content",)
     list_filter = ("created_at",)
-    form = PostForm
-
-    def get_queryset(self, request):
-        return PostEngagement.objects.all()
 
     def save_model(self, request, obj, form, change):
         with connection.cursor() as cursor:
             if change:
                 cursor.execute(
                     "UPDATE Posts SET user_id = %s, content = %s, image_url = %s WHERE post_id = %s",
-                    [
-                        form.cleaned_data["user"].user_id,
-                        form.cleaned_data["content"],
-                        form.cleaned_data["image_url"],
-                        obj.post_id,
-                    ],
+                    [obj.user.user_id, obj.content, obj.image_url, obj.post_id]
                 )
             else:
                 cursor.execute(
-                    "INSERT INTO Posts (user_id, content, image_url) VALUES (%s, %s, %s)",
-                    [
-                        form.cleaned_data["user"].user_id,
-                        form.cleaned_data["content"],
-                        form.cleaned_data["image_url"],
-                    ],
+                    "INSERT INTO Posts (user_id, content, image_url, created_at) VALUES (%s, %s, %s, NOW())",
+                    [obj.user.user_id, obj.content, obj.image_url]
                 )
 
     def delete_model(self, request, obj):
@@ -101,6 +92,8 @@ class CommentAdmin(admin.ModelAdmin):
             )
 
 
+
+
 admin.site.register(Post, PostAdmin)
-admin.site.register(Like, LikeAdmin)
-admin.site.register(Comment, CommentAdmin)
+admin.site.register(Like)
+admin.site.register(Comment)
