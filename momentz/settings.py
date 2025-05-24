@@ -29,7 +29,11 @@ SECRET_KEY = "django-insecure-$da5s6o7m5l021!t-13likw_i*u@&g*_rsh)5olhu-095$oo%5
 DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Application definition
 
@@ -68,7 +72,7 @@ TEMPLATES = [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
-                 'django.template.context_processors.static',
+                "django.template.context_processors.static",
                 "django.contrib.messages.context_processors.messages",
             ],
         },
@@ -138,17 +142,16 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "login"
 
 DONT_UPDATE_LAST_LOGIN = True
 
 
-
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 AUTHENTICATION_BACKENDS = [
-    'users.auth.SQLServerAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    "users.auth.SQLServerAuthBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]

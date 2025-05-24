@@ -1,0 +1,21 @@
+/* Custom styles for Momentz */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    max-width: 1200px;
+}
+
+/* Tailwind-like utility classes */
+.text-gray-800 { color: #1f2937; }
+.bg-gray-100 { background-color: #f3f4f6; }
+.rounded-lg { border-radius: 0.5rem; }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+.transition { transition: all 0.3s ease; }
+.max-w-xs { max-width: 20rem; }

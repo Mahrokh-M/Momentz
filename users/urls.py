@@ -12,4 +12,3 @@ urlpatterns = [
     path("discover/", views.discover_users, name="discover_users"),
     path("create/", views.create_post, name="create_post"),
 ]
-
