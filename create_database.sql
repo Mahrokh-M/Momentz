@@ -110,7 +110,7 @@ VALUES
 (5, 'Captured a beautiful packet dump.', NULL),
 (6, 'Steganography is my aesthetic.', NULL),
 (7, 'Booted into a custom OS from USB.', NULL),
-(8, 'Script kiddies don’t read RFCs ??', NULL),
+(8, 'Script kiddies donï¿½t read RFCs ??', NULL),
 (9, 'Wrote a Python tool to scrape login portals.', NULL),
 (10, 'Writing my paper on VPN privacy leaks!', NULL);
 
@@ -133,7 +133,7 @@ INSERT INTO Comments (user_id, post_id, content, parent_comment_id)
 VALUES
 (2, 1, 'Awesome, share the technique?', NULL),
 (3, 1, 'Legend!', NULL),
-(4, 2, 'Screenshot or it didn’t happen.', NULL),
+(4, 2, 'Screenshot or it didnï¿½t happen.', NULL),
 (5, 3, 'Can you disclose it responsibly?', NULL),
 (6, 4, 'Yesss! My favorite topic.', NULL),
 (7, 5, 'How big was the dump?', NULL),
@@ -164,7 +164,7 @@ VALUES
 (3, 4, 'Wanna collab on a reverse engineering project?'),
 (4, 5, 'Check this vulnerability!'),
 (5, 6, 'Packet traces are clean.'),
-(6, 1, 'Let’s chat about opsec later.'),
+(6, 1, 'Letï¿½s chat about opsec later.'),
 (7, 8, 'That OS boot trick was amazing!'),
 (8, 9, 'Wanna write a tool together?'),
 (9, 10, 'Are you publishing that VPN paper soon?'),
@@ -214,16 +214,17 @@ RETURN (
             END AS other_user_id,
             MAX(sent_at) AS latest
         FROM Messages
-        WHERE sender_id = @user_id OR receiver_id = @user_id
+        WHERE (sender_id = @user_id OR receiver_id = @user_id)
+        AND sender_id != receiver_id -- Exclude self-chats
         GROUP BY CASE 
                     WHEN sender_id = @user_id THEN receiver_id 
                     ELSE sender_id 
                  END
     ) M2 ON (
-        (M1.sender_id = @user_id AND M1.receiver_id = M2.other_user_id OR
-         M1.sender_id = M2.other_user_id AND M1.receiver_id = @user_id)
-        AND M1.sent_at = M2.latest
+        (M1.sender_id = @user_id AND M1.receiver_id = M2.other_user_id) OR
+        (M1.sender_id = M2.other_user_id AND M1.receiver_id = @user_id)
     )
+    AND M1.sent_at = M2.latest
 );
 -----------------------------------------Triggers
 
@@ -644,12 +645,12 @@ SELECT * FROM Likes WHERE user_id = 4 AND post_id = 10;
 CREATE PROCEDURE sp_SendMessage
     @senderId INT,
     @receiverId INT,
-    @content TEXT
+    @content NVARCHAR(MAX)  
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Validate 
+
     IF NOT EXISTS (SELECT 1 FROM Users WHERE user_id = @senderId)
     BEGIN
         RAISERROR ('Invalid sender ID.', 16, 1);
@@ -660,11 +661,15 @@ BEGIN
         RAISERROR ('Invalid receiver ID.', 16, 1);
         RETURN;
     END;
-    IF @content IS NULL OR DATALENGTH(@content) = 0
+    IF @content IS NULL OR LEN(@content) = 0
     BEGIN
         RAISERROR ('Message content cannot be empty.', 16, 1);
         RETURN;
     END;
+
+    INSERT INTO Messages (sender_id, receiver_id, content)
+    VALUES (@senderId, @receiverId, @content);
+END;
 
 
     INSERT INTO Messages (sender_id, receiver_id, content)
