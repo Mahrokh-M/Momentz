@@ -12,7 +12,8 @@ def home(request):
     try:
         user_id = request.user.user_id
         with connection.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT P.post_id, P.content, P.image_url, P.created_at,
                        U.user_id AS author_id, U.username AS author_username,
                        U.full_name AS author_full_name, U.picture_url AS author_picture_url,
@@ -24,14 +25,18 @@ def home(request):
                 JOIN Followers F ON F.following_user_id = U.user_id
                 WHERE F.follower_user_id = %s
                 ORDER BY P.created_at DESC
-            """, [user_id, user_id])
+            """,
+                [user_id, user_id],
+            )
             columns = [col[0] for col in cursor.description]
             posts = [dict(zip(columns, row)) for row in cursor.fetchall()]
             for post in posts:
-                post['is_liked'] = bool(post['is_liked'])
+                post["is_liked"] = bool(post["is_liked"])
 
         with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM Followers WHERE follower_user_id = %s", [user_id])
+            cursor.execute(
+                "SELECT COUNT(*) FROM Followers WHERE follower_user_id = %s", [user_id]
+            )
             following_count = cursor.fetchone()[0]
 
         post_dict = {post["post_id"]: post for post in posts}
@@ -79,11 +84,13 @@ def profile(request, username):
                 FROM Posts P
                 WHERE P.user_id = %s
                 ORDER BY P.created_at DESC
-            """, [request.user.user_id, profile["user_id"]])
+            """,
+                [request.user.user_id, profile["user_id"]],
+            )
             columns = [col[0] for col in cursor.description]
             posts = [dict(zip(columns, row)) for row in cursor.fetchall()]
             for post in posts:
-                post['is_liked'] = bool(post['is_liked'])
+                post["is_liked"] = bool(post["is_liked"])
 
         return render(request, "users/profile.html", {
             "profile": profile,
@@ -93,6 +100,7 @@ def profile(request, username):
     except Exception as e:
         messages.error(request, f"Error loading profile: {str(e)}")
         return redirect("users:home")
+
 
 def login_view(request):
     if request.method == "POST":
@@ -130,12 +138,12 @@ def register_view(request):
                 cursor.execute(
                     "INSERT INTO Users (username, email, password_hash, full_name, created_at) "
                     "VALUES (%s, %s, %s, %s, GETDATE())",
-                    [username, email, hashed_pw, full_name]
+                    [username, email, hashed_pw, full_name],
                 )
                 cursor.execute(
                     "SELECT user_id, username, email, password_hash, full_name, created_at "
                     "FROM Users WHERE username = %s",
-                    [username]
+                    [username],
                 )
                 row = cursor.fetchone()
                 user = User(
@@ -168,7 +176,7 @@ def follow_user(request, user_id):
                 if is_following:
                     cursor.execute(
                         "DELETE FROM Followers WHERE follower_user_id = %s AND following_user_id = %s",
-                        [request.user.user_id, user_id]
+                        [request.user.user_id, user_id],
                     )
                     messages.success(request, "Successfully unfollowed user")
                 else:
@@ -192,7 +200,9 @@ def discover_users(request):
                 FROM Users U
                 WHERE U.user_id != %s
                 ORDER BY U.username
-            """, [request.user.user_id, request.user.user_id])
+            """,
+                [request.user.user_id, request.user.user_id],
+            )
             columns = [col[0] for col in cursor.description]
             users = [dict(zip(columns, row)) for row in cursor.fetchall()]
         return render(request, "users/discover.html", {"users": users})
@@ -213,7 +223,9 @@ def create_post(request):
             })
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT 1 FROM Users WHERE user_id = %s", [request.user.user_id])
+                cursor.execute(
+                    "SELECT 1 FROM Users WHERE user_id = %s", [request.user.user_id]
+                )
                 if not cursor.fetchone():
                     messages.error(request, f"Invalid user_id: {request.user.user_id}")
                     return render(request, "users/create_post.html", {
@@ -223,7 +235,7 @@ def create_post(request):
                 cursor.execute(
                     "INSERT INTO Posts (user_id, content, image_url, created_at) "
                     "VALUES (%s, %s, %s, GETDATE())",
-                    [request.user.user_id, content, image_url]
+                    [request.user.user_id, content, image_url],
                 )
                 messages.success(request, "Post created successfully!")
                 return redirect("users:home")
@@ -250,13 +262,15 @@ def post_detail(request, post_id):
                 FROM Posts P
                 JOIN Users U ON P.user_id = U.user_id
                 WHERE P.post_id = %s
-            """, [request.user.user_id, post_id])
+            """,
+                [request.user.user_id, post_id],
+            )
             columns = [col[0] for col in cursor.description]
             post_data = cursor.fetchone()
             if not post_data:
                 return HttpResponse("Post not found", status=404)
             post = dict(zip(columns, post_data))
-            post['is_liked'] = bool(post['is_liked'])
+            post["is_liked"] = bool(post["is_liked"])
 
             cursor.execute("""
                 SELECT 
@@ -267,7 +281,9 @@ def post_detail(request, post_id):
                 JOIN Users U ON C.user_id = U.user_id
                 WHERE C.post_id = %s
                 ORDER BY C.created_at ASC
-            """, [post_id])
+            """,
+                [post_id],
+            )
             columns = [col[0] for col in cursor.description]
             comments = [dict(zip(columns, row)) for row in cursor.fetchall()]
 

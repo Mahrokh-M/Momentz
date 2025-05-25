@@ -87,6 +87,17 @@ def inbox(request):
         )
 
 @login_required
+def start_chat(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        if not username:
+            messages.error(request, "Please select a user to start a conversation.")
+            return redirect("messaging:inbox")
+        return redirect("messaging:chat", username=username)
+    return redirect("messaging:inbox")
+
+
+@login_required
 def chat(request, username):
     user_id = request.user.user_id
     try:

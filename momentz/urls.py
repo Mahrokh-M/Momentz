@@ -10,4 +10,3 @@ urlpatterns = [
     path('messaging/', include('messaging.urls', namespace='messaging')),
     path('notifications/', include('notifications.urls', namespace='notifications')),
 ]
-
