@@ -5,6 +5,7 @@ from django.http import Http404
 from django.contrib import messages
 from django.http import JsonResponse
 
+
 @login_required
 def create_post(request):
     if request.method == 'POST':
