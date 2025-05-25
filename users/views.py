@@ -13,6 +13,7 @@ def home(request):
         user_id = request.user.user_id
         # Fetch posts from users the current user follows
         with connection.cursor() as cursor:
+<<<<<<< Updated upstream
             cursor.execute(
                 """
                 SELECT 
@@ -21,11 +22,21 @@ def home(request):
                     U.full_name AS author_full_name, U.picture_url AS author_picture_url,
                     (SELECT COUNT(*) FROM Likes L WHERE L.post_id = P.post_id) AS like_count,
                     (SELECT COUNT(*) FROM Comments C WHERE C.post_id = P.post_id) AS comment_count
+=======
+            cursor.execute("""
+                SELECT P.post_id, P.content, P.image_url, P.created_at,
+                       U.user_id AS author_id, U.username AS author_username,
+                       U.full_name AS author_full_name, U.picture_url AS author_picture_url,
+                       (SELECT COUNT(*) FROM Likes L WHERE L.post_id = P.post_id) AS like_count,
+                       (SELECT COUNT(*) FROM Comments C WHERE C.post_id = P.post_id) AS comment_count,
+                       (SELECT 1 FROM Likes L WHERE L.post_id = P.post_id AND L.user_id = %s) AS is_liked
+>>>>>>> Stashed changes
                 FROM Posts P
                 JOIN Users U ON P.user_id = U.user_id
                 JOIN Followers F ON F.followed_id = U.user_id
                 WHERE F.follower_id = %s
                 ORDER BY P.created_at DESC
+<<<<<<< Updated upstream
             """,
                 [user_id],
             )
@@ -67,6 +78,22 @@ def home(request):
             {"posts": [], "following_count": 0, "debug": True, "post_dict": None},
         )
 
+=======
+            """, [request.user.user_id, request.user.user_id])
+            
+            columns = [col[0] for col in cursor.description]
+            posts = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            for post in posts:
+                post['is_liked'] = bool(post['is_liked'])
+            
+        return render(request, "home.html", {
+            "posts": posts,
+            "post_dict": posts[0] if posts else None
+        })
+    except Exception as e:
+        messages.error(request, f"Error loading feed: {str(e)}")
+        return render(request, "home.html", {"posts": []})
+>>>>>>> Stashed changes
 
 @login_required
 def profile(request, username):
@@ -84,7 +111,10 @@ def profile(request, username):
 
             profile = dict(zip(columns, profile_data))
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
             # Check if current user follows this profile
             cursor.execute(
                 "SELECT dbo.IsFollowing(%s, %s) AS is_following",
@@ -102,6 +132,7 @@ def profile(request, username):
                 FROM Posts P
                 WHERE P.user_id = %s
                 ORDER BY P.created_at DESC
+<<<<<<< Updated upstream
             """,
                 [profile["user_id"]],
             )
@@ -122,12 +153,38 @@ def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")  # Only username, no email
         password = request.POST.get("password")
+=======
+            """, [request.user.user_id, profile['user_id']])
+            columns = [col[0] for col in cursor.description]
+            posts = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            for post in posts:
+                post['is_liked'] = bool(post['is_liked'])
+            
+        return render(request, "profile.html", {
+            "profile": profile,
+            "posts": posts,
+            "is_following": is_following
+        })
+    except Exception as e:
+        messages.error(request, f"Error loading profile: {str(e)}")
+        return redirect('users:home')
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+>>>>>>> Stashed changes
 
         try:
             user = User.objects.get(username=username)
             if user.check_password(password):
+<<<<<<< Updated upstream
                 auth_login(request, user, backend="users.auth.SQLServerAuthBackend")
                 return redirect("home")
+=======
+                auth_login(request, user, backend='users.auth.SQLServerAuthBackend')
+                return redirect('users:home')
+>>>>>>> Stashed changes
             else:
                 messages.error(request, "Invalid password")
         except User.DoesNotExist:
@@ -135,7 +192,10 @@ def login_view(request):
 
     return render(request, "users/login.html")
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 def register_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -152,6 +212,7 @@ def register_view(request):
                 )
                 if cursor.fetchone():
                     messages.error(request, "Username or email already exists")
+<<<<<<< Updated upstream
                     return render(
                         request,
                         "users/register.html",
@@ -159,6 +220,15 @@ def register_view(request):
                     )
 
                 # Insert new user (without last_login)
+=======
+                    return render(request, "register.html", {
+                        'username': username,
+                        'email': email,
+                        'full_name': full_name
+                    })
+                
+                # Insert new user
+>>>>>>> Stashed changes
                 hashed_pw = make_password(password)
                 cursor.execute(
                     "INSERT INTO Users (username, email, password_hash, full_name, created_at) "
@@ -181,10 +251,17 @@ def register_view(request):
                     full_name=row[4],
                     created_at=row[5],
                 )
+<<<<<<< Updated upstream
 
                 auth_login(request, user, backend="users.auth.SQLServerAuthBackend")
                 return redirect("home")
 
+=======
+                
+                auth_login(request, user, backend='users.auth.SQLServerAuthBackend')
+                return redirect('users:home')
+                
+>>>>>>> Stashed changes
         except Exception as e:
             messages.error(request, f"Registration failed: {str(e)}")
 
@@ -194,25 +271,40 @@ def register_view(request):
 @login_required
 def logout_view(request):
     auth_logout(request)
+<<<<<<< Updated upstream
     return redirect("login")
 
+=======
+    return redirect('users:login')
+>>>>>>> Stashed changes
 
 @login_required
 def follow_user(request, user_id):
     if request.method == "POST":
         try:
             with connection.cursor() as cursor:
+<<<<<<< Updated upstream
                 # Check if already following using your IsFollowing function
                 cursor.execute(
                     "SELECT dbo.IsFollowing(%s, %s) AS is_following",
                     [request.user.user_id, user_id],
                 )
+=======
+                # Check if already following
+                cursor.execute("SELECT dbo.IsFollowing(%s, %s) AS is_following", 
+                             [request.user.user_id, user_id])
+>>>>>>> Stashed changes
                 is_following = cursor.fetchone()[0]
 
                 if is_following:
+<<<<<<< Updated upstream
                     # UNFOLLOW LOGIC
                     cursor.execute(
                         """
+=======
+                    # Unfollow
+                    cursor.execute("""
+>>>>>>> Stashed changes
                         DELETE FROM Followers 
                         WHERE follower_id = %s AND followed_id = %s
                     """,
@@ -220,6 +312,7 @@ def follow_user(request, user_id):
                     )
                     messages.success(request, "Successfully unfollowed user")
                 else:
+<<<<<<< Updated upstream
                     # FOLLOW LOGIC (using your existing sp_FollowUser)
                     cursor.execute(
                         "EXEC sp_FollowUser %s, %s", [request.user.user_id, user_id]
@@ -231,23 +324,45 @@ def follow_user(request, user_id):
                     "SELECT dbo.IsFollowing(%s, %s) AS is_following",
                     [request.user.user_id, user_id],
                 )
+=======
+                    # Follow
+                    cursor.execute("EXEC sp_FollowUser %s, %s", 
+                                 [request.user.user_id, user_id])
+                    messages.success(request, "Successfully followed user")
+                
+                # Update follow status
+                cursor.execute("SELECT dbo.IsFollowing(%s, %s) AS is_following", 
+                             [request.user.user_id, user_id])
+>>>>>>> Stashed changes
                 is_following = cursor.fetchone()[0]
 
         except Exception as e:
             messages.error(request, f"Error: {str(e)}")
+<<<<<<< Updated upstream
 
         return redirect(request.META.get("HTTP_REFERER", "home"))
 
     return redirect("home")
 
+=======
+        
+        return redirect(request.META.get('HTTP_REFERER', 'users:home'))
+    
+    return redirect('users:home')
+>>>>>>> Stashed changes
 
 @login_required
 def discover_users(request):
     try:
         with connection.cursor() as cursor:
+<<<<<<< Updated upstream
             # Get all users except current user and those already followed
             cursor.execute(
                 """
+=======
+            # Get all users except current user
+            cursor.execute("""
+>>>>>>> Stashed changes
                 SELECT U.user_id, U.username, U.full_name, U.picture_url,
                        dbo.IsFollowing(%s, U.user_id) AS is_following
                 FROM Users U
@@ -263,8 +378,12 @@ def discover_users(request):
         return render(request, "users/discover.html", {"users": users})
     except Exception as e:
         messages.error(request, f"Error loading users: {str(e)}")
+<<<<<<< Updated upstream
         return redirect("home")
 
+=======
+        return redirect('users:home')
+>>>>>>> Stashed changes
 
 @login_required
 def create_post(request):
@@ -275,7 +394,11 @@ def create_post(request):
         if not content:
             messages.error(request, "Content is required")
             return render(request, "users/create_post.html")
+<<<<<<< Updated upstream
 
+=======
+        
+>>>>>>> Stashed changes
         try:
             # Validate user_id
             with connection.cursor() as cursor:
@@ -294,6 +417,7 @@ def create_post(request):
                     [request.user.user_id, content, image_url],
                 )
                 messages.success(request, "Post created successfully!")
+<<<<<<< Updated upstream
                 return redirect("home")
         except Exception as e:
             messages.error(request, f"Error creating post: {str(e)}")
@@ -356,3 +480,14 @@ def post_detail(request, post_id):
     except Exception as e:
         messages.error(request, f"Error loading post: {str(e)}")
         return redirect("home")
+=======
+                return redirect('users:home')
+        except Exception as e:
+            messages.error(request, f"Failed to create post: {str(e)}")
+            return render(request, "create_post.html", {
+                'content': content,
+                'image_url': image_url
+            })
+    
+    return render(request, "  create_post.html")
+>>>>>>> Stashed changes

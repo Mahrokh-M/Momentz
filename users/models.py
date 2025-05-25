@@ -28,6 +28,7 @@ class User(AbstractBaseUser):
     created_at = models.DateTimeField(default=timezone.now, db_column="created_at")
     last_login = models.DateTimeField(null=True, blank=True, db_column="last_login")
 
+<<<<<<< Updated upstream
     def save(self, *args, **kwargs):
         # Prevent last_login from being automatically updated
         if "update_fields" in kwargs and "last_login" in kwargs["update_fields"]:
@@ -35,6 +36,10 @@ class User(AbstractBaseUser):
         super().save(*args, **kwargs)
 
     USERNAME_FIELD = "username"
+=======
+    
+    USERNAME_FIELD = 'username'
+>>>>>>> Stashed changes
     REQUIRED_FIELDS = []
 
     objects = UserManager()
