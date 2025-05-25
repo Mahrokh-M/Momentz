@@ -8,6 +8,12 @@ from django.contrib.auth.hashers import make_password, check_password
 from .models import User
 
 
+def homepage(request):
+    if request.user.is_authenticated:
+        return redirect("users:home")  # Redirect to feed if logged in
+    return render(request, "users/index.html")
+
+
 @login_required
 def home(request):
     try:
@@ -201,7 +207,7 @@ def register_view(request):
 @login_required
 def logout_view(request):
     auth_logout(request)
-    return redirect("users:login")
+    return redirect("users:homepage")
 
 
 @login_required

@@ -24,5 +24,6 @@ class Message(models.Model):
         db_table = "Messages"
         managed = False
 
+    # Either remove the __str__ method completely or change it to something simpler:
     def __str__(self):
-        return f"Message from {self.sender.username} to {self.receiver.username}"
+        return f"Message #{self.message_id}"  # Or just return self.content

@@ -15,7 +15,8 @@
                         {% if conv.chat_partner_username %}
                             <li class="p-3 hover:bg-gray-100 rounded-lg transition duration-200 ease-in-out message-item">
                                 <a href="{% url 'messaging:chat' conv.chat_partner_username %}" class="flex items-center space-x-4">
-                                    <img src="{% if conv.chat_partner_picture_url and conv.chat_partner_picture_url|length > 0 %}{{ conv.chat_partner_picture_url }}{% else %}{% static 'images/default_avatar.jpg' %}{% endif %}" alt="Avatar" class="w-12 h-12 rounded-full">
+                                    <img src="{% if conv.chat_partner_picture_url and conv.chat_partner_picture_url|length > 0 %}{{ conv.chat_partner_picture_url }}{% else %}{% static 'images/default_avatar.jpg' %}{% endif %}" 
+                                         alt="Avatar" class="w-12 h-12 rounded-full">
                                     <div>
                                         <p class="font-semibold text-gray-800">{{ conv.chat_partner_username }}</p>
                                         <p class="text-sm text-gray-600 truncate">{{ conv.content|truncatechars:50 }}</p>
@@ -38,7 +39,8 @@
                     {% if user.username %}
                         <li class="p-3 hover:bg-gray-100 rounded-lg transition duration-200 ease-in-out">
                             <a href="{% url 'messaging:chat' user.username %}" class="flex items-center space-x-4">
-                                <img src="{% if user.picture_url and user.picture_url|length > 0 %}{{ user.picture_url }}{% else %}{% static 'images/default_avatar.jpg' %}{% endif %}" alt="Avatar" class="w-12 h-12 rounded-full">
+                                <img src="{% if user.picture_url and user.picture_url|length > 0 %}{{ user.picture_url }}{% else %}{% static 'images/default_avatar.jpg' %}{% endif %}" 
+                                     alt="Avatar" class="w-12 h-12 rounded-full">
                                 <p class="font-semibold text-gray-800">{{ user.username }}</p>
                             </a>
                         </li>

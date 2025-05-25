@@ -19,7 +19,7 @@ def inbox(request):
     with connection.cursor() as cursor:
         cursor.execute(
             """
-            SELECT 
+            SELECT DISTINCT
                 CASE 
                     WHEN m.sender_id = %s THEN m.receiver_id 
                     ELSE m.sender_id 
@@ -38,9 +38,9 @@ def inbox(request):
                     ELSE m.sender_id 
                 END = u.user_id
             )
-            WHERE m.sender_id != %s OR m.receiver_id != %s
+            WHERE (m.sender_id != %s OR m.receiver_id != %s)
             ORDER BY m.sent_at DESC
-        """,
+            """,
             [user_id, user_id, user_id, user_id, user_id],
         )
         columns = [col[0] for col in cursor.description]
@@ -65,17 +65,6 @@ def inbox(request):
 
 
 @login_required
-def start_chat(request):
-    if request.method == "POST":
-        username = request.POST.get("username")
-        if not username:
-            messages.error(request, "Please select a user to start a conversation.")
-            return redirect("messaging:inbox")
-        return redirect("messaging:chat", username=username)
-    return redirect("messaging:inbox")
-
-
-@login_required
 def chat(request, username):
     user_id = request.user.user_id
     try:
@@ -84,25 +73,22 @@ def chat(request, username):
         messages.error(request, "User not found.")
         return redirect("messaging:inbox")
 
+    # Get messages between these two users
     messages_list = (
         Message.objects.filter(
-            models.Q(sender_id=user_id, receiver_id=receiver.user_id)
-            | models.Q(sender_id=receiver.user_id, receiver_id=user_id)
+            (
+                models.Q(sender_id=user_id, receiver_id=receiver.user_id)
+                | models.Q(sender_id=receiver.user_id, receiver_id=user_id)
+            )
         )
         .select_related("sender", "receiver")
         .order_by("sent_at")
     )
 
-    if not messages_list.exists() and request.method == "GET":
-        messages.info(request, "No messages yet. Start a conversation!")
-
-    # Mark unread messages from the receiver as read
-    unread_messages = messages_list.filter(
+    # Mark unread messages as read
+    Message.objects.filter(
         receiver_id=user_id, sender_id=receiver.user_id, is_read=False
-    )
-    for message in unread_messages:
-        message.is_read = True
-        message.save()
+    ).update(is_read=True)
 
     return render(
         request,
@@ -127,9 +113,13 @@ def send_message(request):
         content = data.get("content")
         sender_id = request.user.user_id
 
-        logger.info(
-            f"Sending message: sender={sender_id}, receiver={receiver_id}, content={content}"
-        )
+        if not content or not receiver_id:
+            return JsonResponse(
+                {"status": "error", "message": "Missing required fields"}, status=400
+            )
+
+        logger.info(f"Sending message: sender={sender_id}, receiver={receiver_id}")
+
         with connection.cursor() as cursor:
             cursor.execute(
                 "EXEC sp_SendMessage @senderId=%s, @receiverId=%s, @content=%s",

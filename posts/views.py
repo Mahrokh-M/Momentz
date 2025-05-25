@@ -49,46 +49,54 @@ def post_detail(request, post_id):
                 FROM Posts P
                 JOIN Users U ON P.user_id = U.user_id
                 WHERE P.post_id = %s
-            """, [post_id])
-            
-            post = dict(zip(
-                [col[0] for col in cursor.description],
-                cursor.fetchone() or (None,)
-            ))
-            
+            """,
+                [post_id],
+            )
+
+            post = dict(
+                zip(
+                    [col[0] for col in cursor.description], cursor.fetchone() or (None,)
+                )
+            )
+
             if not post:
                 raise Http404("Post not found")
-                
+
             # Check if current user liked the post
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT 1 FROM Likes 
                 WHERE user_id = %s AND post_id = %s
                 LIMIT 1
-            """, [request.user.user_id, post_id])
-            post['is_liked'] = bool(cursor.fetchone())
-            
+            """,
+                [request.user.user_id, post_id],
+            )
+            post["is_liked"] = bool(cursor.fetchone())
+
             # Get comments with author info
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT C.*, U.username, U.full_name, U.picture_url
                 FROM Comments C
                 JOIN Users U ON C.user_id = U.user_id
                 WHERE C.post_id = %s
                 ORDER BY C.created_at ASC
-            """, [post_id])
+            """,
+                [post_id],
+            )
             comments = [
                 dict(zip([col[0] for col in cursor.description], row))
                 for row in cursor.fetchall()
             ]
-            
+
     except Exception as e:
         messages.error(request, "Error loading post")
         print(f"Error loading post: {str(e)}")
-        return redirect('users:home')
-    
-    return render(request, "posts/post_detail.html", {
-        'post': post,
-        'comments': comments
-    })
+        return redirect("users:home")
+
+    return render(
+        request, "posts/post_detail.html", {"post": post, "comments": comments}
+    )
 
 
 from django.shortcuts import redirect
@@ -97,64 +105,75 @@ from django.contrib import messages
 from django.db import connection
 from django.http import JsonResponse
 
+
 @login_required
 def add_comment(request, post_id):
-    if request.method == 'POST':
-        content = request.POST.get('content', '').strip()
-        parent_comment_id = request.POST.get('parent_comment_id', None)
-        
+    if request.method == "POST":
+        content = request.POST.get("content", "").strip()
+        parent_comment_id = request.POST.get("parent_comment_id", None)
+
         if not content:
             messages.error(request, "Comment cannot be empty")
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'message': 'Comment cannot be empty'}, status=400)
-            return redirect(request.META.get('HTTP_REFERER', 'home'))
-            
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {"success": False, "message": "Comment cannot be empty"}, status=400
+                )
+            return redirect(request.META.get("HTTP_REFERER", "home"))
+
         try:
             with connection.cursor() as cursor:
                 # Use stored procedure sp_AddComment
                 cursor.execute(
                     "EXEC sp_AddComment %s, %s, %s, %s",
-                    [request.user.user_id, post_id, content, parent_comment_id]
+                    [request.user.user_id, post_id, content, parent_comment_id],
                 )
                 messages.success(request, "Comment added successfully!")
-                
+
                 # Get the new comment for AJAX response
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    cursor.execute("""
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    cursor.execute(
+                        """
                         SELECT C.comment_id, C.content, C.created_at,
                                U.username, U.full_name, U.picture_url
                         FROM Comments C
                         JOIN Users U ON C.user_id = U.user_id
                         WHERE C.comment_id = (SELECT MAX(comment_id) FROM Comments WHERE post_id = %s AND user_id = %s)
-                    """, [post_id, request.user.user_id])
-                    comment = dict(zip([col[0] for col in cursor.description], cursor.fetchone()))
+                    """,
+                        [post_id, request.user.user_id],
+                    )
+                    comment = dict(
+                        zip([col[0] for col in cursor.description], cursor.fetchone())
+                    )
                     cursor.execute(
-                        "SELECT COUNT(*) FROM Comments WHERE post_id = %s",
-                        [post_id]
+                        "SELECT COUNT(*) FROM Comments WHERE post_id = %s", [post_id]
                     )
                     comment_count = cursor.fetchone()[0]
-                    return JsonResponse({
-                        'success': True,
-                        'comment': {
-                            'comment_id': comment['comment_id'],
-                            'content': comment['content'],
-                            'username': comment['username'],
-                            'full_name': comment['full_name'],
-                            'picture_url': comment['picture_url'] or '/static/images/default-profile.png',
-                            'created_at': comment['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-                        },
-                        'comment_count': comment_count
-                    })
-                
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "comment": {
+                                "comment_id": comment["comment_id"],
+                                "content": comment["content"],
+                                "username": comment["username"],
+                                "full_name": comment["full_name"],
+                                "picture_url": comment["picture_url"]
+                                or "/static/images/default-profile.png",
+                                "created_at": comment["created_at"].strftime(
+                                    "%Y-%m-%d %H:%M:%S"
+                                ),
+                            },
+                            "comment_count": comment_count,
+                        }
+                    )
+
         except Exception as e:
             messages.error(request, f"Error adding comment: {str(e)}")
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'message': str(e)}, status=400)
-        
-        return redirect(request.META.get('HTTP_REFERER', 'users:home'))
-    
-    return redirect('users:home')
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": False, "message": str(e)}, status=400)
 
+        return redirect(request.META.get("HTTP_REFERER", "users:home"))
+
+    return redirect("users:home")
 
 
 from django.shortcuts import render, get_object_or_404
@@ -208,7 +227,9 @@ def post_detail(request, post_id):
             comments = [dict(zip(columns, row)) for row in cursor.fetchall()]
             print(f"Comments: {comments}")  # Debug
             for comment in comments:
-                comment["commenter_username"] = comment.get("commenter_username") or "Unknown"
+                comment["commenter_username"] = (
+                    comment.get("commenter_username") or "Unknown"
+                )
 
         return render(
             request, "posts/post_detail.html", {"post": post, "comments": comments}
@@ -220,11 +241,13 @@ def post_detail(request, post_id):
 
 @login_required
 def like_post(request, post_id):
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
             with connection.cursor() as cursor:
                 # Use stored procedure sp_LikePost
-                cursor.execute("EXEC sp_LikePost %s, %s", [request.user.user_id, post_id])
+                cursor.execute(
+                    "EXEC sp_LikePost %s, %s", [request.user.user_id, post_id]
+                )
                 messages.success(request, "Post liked successfully!")
         except Exception as e:
             # Check if the error is due to already liking the post
@@ -233,31 +256,28 @@ def like_post(request, post_id):
                 with connection.cursor() as cursor:
                     cursor.execute(
                         "DELETE FROM Likes WHERE user_id = %s AND post_id = %s",
-                        [request.user.user_id, post_id]
+                        [request.user.user_id, post_id],
                     )
                     messages.success(request, "Post unliked")
             else:
                 messages.error(request, f"Error: {str(e)}")
 
         # Handle AJAX request
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT COUNT(*) FROM Likes WHERE post_id = %s",
-                    [post_id]
+                    "SELECT COUNT(*) FROM Likes WHERE post_id = %s", [post_id]
                 )
                 like_count = cursor.fetchone()[0]
                 cursor.execute(
                     "SELECT 1 FROM Likes WHERE user_id = %s AND post_id = %s",
-                    [request.user.user_id, post_id]
+                    [request.user.user_id, post_id],
                 )
                 is_liked = bool(cursor.fetchone())
-                return JsonResponse({
-                    'success': True,
-                    'like_count': like_count,
-                    'is_liked': is_liked
-                })
-        
-        return redirect(request.META.get('HTTP_REFERER', 'users:home'))
-    
-    return redirect('users:home')
+                return JsonResponse(
+                    {"success": True, "like_count": like_count, "is_liked": is_liked}
+                )
+
+        return redirect(request.META.get("HTTP_REFERER", "users:home"))
+
+    return redirect("users:home")

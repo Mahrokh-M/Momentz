@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Momentz{% endblock %}
+
+{% block content %}
+<div class="absolute inset-0 w-screen h-screen overflow-hidden bg-gray-900 font-sans">
+  <!-- Particle Background -->
+  <canvas id="particleCanvas" class="absolute inset-0 z-0"></canvas>
+
+  <!-- Glitch Effect Overlay -->
+  <div class="glitch-overlay fixed inset-0 pointer-events-none z-20 opacity-05"></div>
+
+  <!-- Main Container -->
+  <div class="relative z-10 flex flex-col h-full">
+    <!-- Header -->
+    <header class="flex justify-between items-center p-6 w-full">
+      <h1 class="text-4xl font-bold text-white drop-shadow-lg neon-flicker pop-in" id="logo">
+        MOMENTZ
+      </h1>
+      <nav class="flex space-x-4">
+        <a href="{% url 'users:login' %}" class="px-4 py-2 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-bold rounded hover:scale-105 transition transform duration-200 pop-in">
+          LOGIN
+        </a>
+        <a href="{% url 'users:register' %}" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-400 text-black font-bold rounded hover:scale-105 transition transform duration-200 pop-in" style="animation-delay: 0.2s">
+          REGISTER
+        </a>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col items-center justify-center text-center px-4">
+      <div class="relative glitch-wrapper">
+        <h2 class="text-7xl md:text-8xl font-extrabold mb-4 text-white drop-shadow-xl tracking-widest glitch-text pop-in animate-pop" data-text="M O M E N T Z">
+          M O M E N T Z
+        </h2>
+      </div>
+      
+      <p class="text-xl md:text-2xl text-white max-w-2xl mb-8 drop-shadow">
+        Relive your most electrifying moments under neon skies—every snapshot a pulse in the digital city.
+      </p>
+      
+      <a href="{% url 'users:register' %}" class="px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-400 text-black font-bold rounded relative overflow-hidden group hover:scale-105 transition transform duration-200 glitch-box drop-shadow pop-in" style="animation-delay: 0.4s">
+        GET STARTED
+        <span class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></span>
+      </a>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 text-gray-400 text-sm drop-shadow">
+      <div class="terminal-line">
+        <span class="text-cyan-400">>></span> © 2025 MOMENTZ. ALL RIGHTS RESERVED. <span class="blinking-cursor">_</span>
+      </div>
+    </footer>
+  </div>
+  
+  <!-- Floating Cyber Elements -->
+  <div class="absolute bottom-20 left-10 w-16 h-16 opacity-70 animate-float z-0">
+    <svg viewBox="0 0 24 24" class="text-cyan-400 w-full h-full drop-shadow">
+      <path fill="currentColor" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,10.5A1.5,1.5 0 0,0 10.5,12A1.5,1.5 0 0,0 12,13.5A1.5,1.5 0 0,0 13.5,12A1.5,1.5 0 0,0 12,10.5M7.5,10.5A1.5,1.5 0 0,0 6,12A1.5,1.5 0 0,0 7.5,13.5A1.5,1.5 0 0,0 9,12A1.5,1.5 0 0,0 7.5,10.5M16.5,10.5A1.5,1.5 0 0,0 15,12A1.5,1.5 0 0,0 16.5,13.5A1.5,1.5 0 0,0 18,12A1.5,1.5 0 0,0 16.5,10.5Z" />
+    </svg>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; }
+  canvas { pointer-events: none; display: block; }
+
+  /* Pop-in Animation */
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+  .pop-in { opacity: 0; animation: popIn 0.8s forwards; }
+  #logo { animation-delay: 0.1s; }
+  nav a:nth-child(1) { animation-delay: 0.15s; }
+  nav a:nth-child(2) { animation-delay: 0.2s; }
+
+  /* Title pulse effect */
+  @keyframes animatePop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  .animate-pop { animation: animatePop 3s ease-in-out infinite; }
+
+  /* Cyberpunk Glitch Effects */
+  .glitch-overlay {
+    background: 
+      linear-gradient(rgba(255,0,0,0.05) 0 0),
+      linear-gradient(rgba(0,255,0,0.05) 0 0),
+      linear-gradient(rgba(0,0,255,0.05) 0 0);
+    background-blend-mode: screen;
+    animation: glitch-anim 8s infinite alternate;
+  }
+
+  .glitch-wrapper { position: relative; }
+  .glitch-text { position: relative; color: white; }
+  .glitch-text::before, .glitch-text::after {
+    content: attr(data-text);
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.6;
+  }
+  .glitch-text::before { color: #0ff; z-index: -1; animation: glitch-effect 6s infinite; }
+  .glitch-text::after { color: #f0f; z-index: -2; animation: glitch-effect 4s infinite reverse; }
+
+  .glitch-box::before {
+    left: -120%; transition: left 1s;
+  }
+  .glitch-box:hover::before { left: 120%; }
+
+  /* Animations */
+  @keyframes float { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-10px);} }
+  @keyframes glitch-anim { 0%{ transform: translate(0);} 25%{ transform: translate(-2px,2px);} 50%{ transform: translate(2px,-2px);} 75%{ transform: translate(-2px,-2px);} 100%{ transform: translate(0);} }
+  @keyframes glitch-effect { 0%,100%{ clip-path: inset(0); transform: none;} 20%{ clip-path: inset(10% 0 75% 0); transform: translate(-2px,0);} 40%{ clip-path: inset(80% 0 0 0); transform: translate(2px,0);} 60%{ clip-path: inset(10% 0 75% 0); transform: translate(-2px,0);} 80%{ clip-path: inset(80% 0 0 0); transform: translate(2px,0);} }
+  @keyframes neon-flicker { 0%,19%,21%,23%,25%,54%,56%,100%{ text-shadow: 0 0 5px #fff,0 0 10px #fff,0 0 20px #0ff,0 0 40px #0ff;} 20%,24%,55%{ text-shadow: none;} }
+  .neon-flicker { animation: neon-flicker 1.5s infinite alternate; }
+  .neon-glow { text-shadow: 0 0 5px #0ff,0 0 10px #0ff; }
+
+  .terminal-line { font-family: 'Courier New', monospace; letter-spacing: 1px; }
+  .blinking-cursor { animation: blink 1s step-end infinite; }
+  @keyframes blink { from, to{ opacity:1;} 50%{ opacity:0;} }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Particle System (slightly faster)
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const particles = [];
+  const colors = ['#00ffff','#ff00ff','#00ff00','#ffff00'];
+  const maxParticles = 100;
+  class Particle {
+    constructor(){
+      this.x = Math.random()*canvas.width;
+      this.y = Math.random()*canvas.height;
+      this.size = Math.random()*2 + 0.5;
+      this.color = colors[Math.floor(Math.random()*colors.length)];
+      this.speedX = Math.random()*2 - 1;
+      this.speedY = Math.random()*2 - 1;
+      this.opacity = Math.random()*0.5 + 0.1;
+      this.life = Math.random()*200 + 100;
+    }
+    update(){
+      if(this.x<0||this.x>canvas.width) this.speedX*=-1;
+      if(this.y<0||this.y>canvas.height) this.speedY*=-1;
+      this.x += this.speedX;
+      this.y += this.speedY;
+      this.life--;
+      if(this.life<=0){this.x=Math.random()*canvas.width;this.y=Math.random()*canvas.height;this.life=Math.random()*200+100;}
+    }
+    draw(){
+      ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+      ctx.fillStyle=this.color;ctx.globalAlpha=this.opacity;ctx.fill();ctx.globalAlpha=1;
+    }
+  }
+  function init(){for(let i=0;i<maxParticles;i++)particles.push(new Particle());}
+  function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{p.update();p.draw();});
+    for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.hypot(dx,dy);if(d<100){ctx.beginPath();ctx.strokeStyle=particles[i].color;ctx.globalAlpha=0.2*(1-d/100);ctx.lineWidth=0.4;ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();ctx.globalAlpha=1;}}requestAnimationFrame(animate);}  window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});  init();animate();
+
+  // Slower glitch overlay flicker
+  setInterval(()=>{document.querySelector('.glitch-overlay').style.opacity=Math.random()>0.85?'0.15':'0.05';},1000);
+</script>
+{% endblock %}
+
+{% block navbar %}{% endblock %}
