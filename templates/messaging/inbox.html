@@ -6,6 +6,9 @@
 {% block content %}
 <div class="container mx-auto p-4">
     <h1 class="text-3xl font-bold mb-6 text-gray-800">Messages</h1>
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
     <div class="bg-white shadow-lg rounded-lg overflow-hidden">
         <div class="p-4">
             {% if conversations %}
@@ -14,7 +17,7 @@
                     {% for conv in conversations %}
                         {% if conv.chat_partner_username %}
                             <li class="p-3 hover:bg-gray-100 rounded-lg transition duration-200 ease-in-out message-item">
-                                <a href="{% url 'chat' conv.chat_partner_username %}" class="flex items-center space-x-4">
+                                <a href="{% url 'messaging:chat' conv.chat_partner_username %}" class="flex items-center space-x-4">
                                     <img src="{% if conv.chat_partner_picture_url and conv.chat_partner_picture_url|length > 0 %}{{ conv.chat_partner_picture_url }}{% else %}{% static 'images/default_avatar.jpg' %}{% endif %}" alt="Avatar" class="w-12 h-12 rounded-full">
                                     <div>
                                         <p class="font-semibold text-gray-800">{{ conv.chat_partner_username }}</p>
@@ -37,7 +40,7 @@
                 {% for user in all_users %}
                     {% if user.username %}
                         <li class="p-3 hover:bg-gray-100 rounded-lg transition duration-200 ease-in-out">
-                            <a href="{% url 'chat' user.username %}" class="flex items-center space-x-4">
+                            <a href="{% url 'messaging:chat' user.username %}" class="flex items-center space-x-4">
                                 <img src="{% if user.picture_url and user.picture_url|length > 0 %}{{ user.picture_url }}{% else %}{% static 'images/default_avatar.jpg' %}{% endif %}" alt="Avatar" class="w-12 h-12 rounded-full">
                                 <p class="font-semibold text-gray-800">{{ user.username }}</p>
                             </a>
