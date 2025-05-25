@@ -3,25 +3,31 @@
 {% block title %}Welcome to Momentz{% endblock %}
 
 {% block content %}
-<div class="absolute inset-0 w-screen h-screen overflow-hidden bg-gray-900 font-sans">
+<div class="absolute inset-0 w-screen h-screen overflow-hidden bg-[#0a0a12] font-sans">
   <!-- Particle Background -->
   <canvas id="particleCanvas" class="absolute inset-0 z-0"></canvas>
 
+  <!-- Scanline Overlay -->
+  <div class="scanlines fixed inset-0 pointer-events-none z-10"></div>
+
   <!-- Glitch Effect Overlay -->
-  <div class="glitch-overlay fixed inset-0 pointer-events-none z-20 opacity-05"></div>
+  <div class="glitch-overlay fixed inset-0 pointer-events-none z-20 opacity-03"></div>
 
   <!-- Main Container -->
-  <div class="relative z-10 flex flex-col h-full">
+  <div class="relative z-30 flex flex-col h-full">
     <!-- Header -->
     <header class="flex justify-between items-center p-6 w-full">
-      <h1 class="text-4xl font-bold text-white drop-shadow-lg neon-flicker pop-in" id="logo">
-        MOMENTZ
-      </h1>
-      <nav class="flex space-x-4">
-        <a href="{% url 'users:login' %}" class="px-4 py-2 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-bold rounded hover:scale-105 transition transform duration-200 pop-in">
+      <div class="w-14 h-14 opacity-85 animate-float-glow">
+        <svg viewBox="0 0 24 24" class="text-neon-cyan w-full h-full drop-shadow-lg neon-pulse">
+          <!-- Camera Icon (simplified for header) -->
+          <path fill="currentColor" d="M4,4H7L9,2H15L17,4H20V20H4V4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7Z" />
+        </svg>
+      </div>
+      <nav class="flex space-x-6">
+        <a href="{% url 'users:login' %}" class="px-5 py-3 bg-gradient-to-r from-neon-cyan to-neon-magenta text-white font-bold rounded-lg hover:scale-105 transition transform duration-400 focus:outline-none focus:ring-2 focus:ring-neon-cyan neon-border pop-in">
           LOGIN
         </a>
-        <a href="{% url 'users:register' %}" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-400 text-black font-bold rounded hover:scale-105 transition transform duration-200 pop-in" style="animation-delay: 0.2s">
+        <a href="{% url 'users:register' %}" class="px-5 py-3 bg-gradient-to-r from-neon-magenta to-neon-purple text-white font-bold rounded-lg hover:scale-105 transition transform duration-400 focus:outline-none focus:ring-2 focus:ring-neon-cyan neon-border pop-in" style="animation-delay: 0.2s">
           REGISTER
         </a>
       </nav>
@@ -30,136 +36,271 @@
     <!-- Main Content -->
     <main class="flex-grow flex flex-col items-center justify-center text-center px-4">
       <div class="relative glitch-wrapper">
-        <h2 class="text-7xl md:text-8xl font-extrabold mb-4 text-white drop-shadow-xl tracking-widest glitch-text pop-in animate-pop" data-text="M O M E N T Z">
-          M O M E N T Z
+        <h2 class="text-7xl md:text-9xl font-extrabold text-neon-cyan drop-shadow-xl tracking-widest glitch-text animate-scan" data-text="M O M E N T Z">
+          <span class="letter">M</span><span class="letter">O</span><span class="letter">M</span><span class="letter">E</span><span class="letter">N</span><span class="letter">T</span><span class="letter">Z</span>
         </h2>
       </div>
-      
-      <p class="text-xl md:text-2xl text-white max-w-2xl mb-8 drop-shadow">
+      <p class="text-xl md:text-3xl text-neon-pink max-w-3xl mb-10 drop-shadow-lg neon-glow">
         Relive your most electrifying moments under neon skies—every snapshot a pulse in the digital city.
       </p>
-      
-      <a href="{% url 'users:register' %}" class="px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-400 text-black font-bold rounded relative overflow-hidden group hover:scale-105 transition transform duration-200 glitch-box drop-shadow pop-in" style="animation-delay: 0.4s">
+      <a href="{% url 'users:register' %}" class="px-10 py-5 bg-gradient-to-r from-neon-purple to-neon-cyan text-white font-bold text-lg rounded-lg relative overflow-hidden group hover:scale-105 transition transform duration-400 focus:outline-none focus:ring-2 focus:ring-neon-cyan neon-border glitch-box drop-shadow-lg pop-in" style="animation-delay: 0.4s">
         GET STARTED
-        <span class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></span>
+        <span class="absolute inset-0 bg-neon-magenta opacity-0 group-hover:opacity-15 transition-opacity duration-600"></span>
       </a>
     </main>
 
     <!-- Footer -->
-    <footer class="w-full text-center py-4 text-gray-400 text-sm drop-shadow">
-      <div class="terminal-line">
-        <span class="text-cyan-400">>></span> © 2025 MOMENTZ. ALL RIGHTS RESERVED. <span class="blinking-cursor">_</span>
+    <footer class="w-full text-center py-6 text-neon-pink text-sm drop-shadow-lg">
+      <div class="terminal-line glitch-text" data-text=">> © 2025 MOMENTZ. ALL RIGHTS RESERVED.">
+        <span class="text-neon-cyan">>></span> <span id="typing-text"></span><span class="blinking-cursor">_</span>
       </div>
     </footer>
-  </div>
-  
-  <!-- Floating Cyber Elements -->
-  <div class="absolute bottom-20 left-10 w-16 h-16 opacity-70 animate-float z-0">
-    <svg viewBox="0 0 24 24" class="text-cyan-400 w-full h-full drop-shadow">
-      <path fill="currentColor" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,10.5A1.5,1.5 0 0,0 10.5,12A1.5,1.5 0 0,0 12,13.5A1.5,1.5 0 0,0 13.5,12A1.5,1.5 0 0,0 12,10.5M7.5,10.5A1.5,1.5 0 0,0 6,12A1.5,1.5 0 0,0 7.5,13.5A1.5,1.5 0 0,0 9,12A1.5,1.5 0 0,0 7.5,10.5M16.5,10.5A1.5,1.5 0 0,0 15,12A1.5,1.5 0 0,0 16.5,13.5A1.5,1.5 0 0,0 18,12A1.5,1.5 0 0,0 16.5,10.5Z" />
-    </svg>
+
+    <!-- Floating Cyber Element (Single Camera Icon) -->
+    <div class="absolute bottom-10 right-10 w-16 h-16 opacity-85 animate-float-glow z-0 hover:scale-120 hover:rotate-10 transition-transform duration-1200">
+      <svg viewBox="0 0 24 24" class="text-neon-magenta w-full h-full drop-shadow-lg neon-pulse">
+        <!-- Camera Icon -->
+        <path fill="currentColor" d="M4,4H7L9,2H15L17,4H20V20H4V4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7Z" />
+      </svg>
+    </div>
   </div>
 </div>
 {% endblock %}
 
 {% block styles %}
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --neon-cyan: #00ffff;
+    --neon-magenta: #ff00cc;
+    --neon-purple: #cc00ff;
+    --neon-pink: #ff66cc;
+    --bg-dark: #0a0a12; /* Changed to match base template */
+  }
+
   html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; }
+  body { font-family: 'Orbitron', sans-serif; background: var(--bg-dark); }
   canvas { pointer-events: none; display: block; }
+
+  /* Scanlines */
+  .scanlines {
+    background: linear-gradient(rgba(255, 255, 255, 0.015) 2px, transparent 2px),
+                linear-gradient(0deg, rgba(255, 255, 255, 0.015) 2px, transparent 2px);
+    background-size: 100% 4px, 4px 100%;
+    animation: scanline-move 40s linear infinite;
+  }
+  @keyframes scanline-move { 0% { background-position: 0 0; } 100% { background-position: 0 80px; } }
 
   /* Pop-in Animation */
   @keyframes popIn {
-    0% { transform: scale(0); opacity: 0; }
-    70% { transform: scale(1.2); opacity: 1; }
+    0% { transform: scale(0.8); opacity: 0; }
+    70% { transform: scale(1.1); opacity: 1; }
     100% { transform: scale(1); }
   }
-  .pop-in { opacity: 0; animation: popIn 0.8s forwards; }
-  #logo { animation-delay: 0.1s; }
-  nav a:nth-child(1) { animation-delay: 0.15s; }
-  nav a:nth-child(2) { animation-delay: 0.2s; }
+  .pop-in { opacity: 0; animation: popIn 1.4s forwards; }
 
-  /* Title pulse effect */
-  @keyframes animatePop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-  .animate-pop { animation: animatePop 3s ease-in-out infinite; }
-
-  /* Cyberpunk Glitch Effects */
-  .glitch-overlay {
-    background: 
-      linear-gradient(rgba(255,0,0,0.05) 0 0),
-      linear-gradient(rgba(0,255,0,0.05) 0 0),
-      linear-gradient(rgba(0,0,255,0.05) 0 0);
-    background-blend-mode: screen;
-    animation: glitch-anim 8s infinite alternate;
+  /* Scanning Animation for Title */
+  @keyframes scan {
+    0% { opacity: 0; transform: translateY(15px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
+  .animate-scan .letter {
+    display: inline-block;
+    opacity: 0;
+    animation: scan 1.2s forwards;
+    text-shadow: 0 0 8px var(--neon-cyan), 0 0 16px var(--neon-cyan), 0 0 24px var(--neon-magenta);
+  }
+  .animate-scan .letter:nth-child(1) { animation-delay: 0.1s; }
+  .animate-scan .letter:nth-child(2) { animation-delay: 0.2s; }
+  .animate-scan .letter:nth-child(3) { animation-delay: 0.3s; }
+  .animate-scan .letter:nth-child(4) { animation-delay: 0.4s; }
+  .animate-scan .letter:nth-child(5) { animation-delay: 0.5s; }
+  .animate-scan .letter:nth-child(6) { animation-delay: 0.6s; }
+  .animate-scan .letter:nth-child(7) { animation-delay: 0.7s; }
 
-  .glitch-wrapper { position: relative; }
-  .glitch-text { position: relative; color: white; }
+  /* Glitch Effects */
+  .glitch-overlay {
+    background: linear-gradient(rgba(0, 247, 255, 0.1), rgba(255, 0, 204, 0.1), rgba(204, 0, 255, 0.1));
+    background-blend-mode: screen;
+    transition: opacity 0.6s;
+  }
+  .glitch-box:hover ~ .glitch-overlay, .glitch-box:focus ~ .glitch-overlay { opacity: 0.12; }
+  .glitch-text { position: relative; }
   .glitch-text::before, .glitch-text::after {
     content: attr(data-text);
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.6;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.5;
   }
-  .glitch-text::before { color: #0ff; z-index: -1; animation: glitch-effect 6s infinite; }
-  .glitch-text::after { color: #f0f; z-index: -2; animation: glitch-effect 4s infinite reverse; }
-
-  .glitch-box::before {
-    left: -120%; transition: left 1s;
+  .glitch-text::before { color: var(--neon-magenta); z-index: -1; animation: glitch-effect 10s infinite; }
+  .glitch-text::after { color: var(--neon-purple); z-index: -2; animation: glitch-effect 9s infinite reverse; }
+  @keyframes glitch-effect {
+    0%, 100% { clip-path: inset(0); transform: none; }
+    20% { clip-path: inset(5% 0 70% 0); transform: translate(-2px, 1px); }
+    40% { clip-path: inset(75% 0 0 0); transform: translate(2px, -1px); }
+    60% { clip-path: inset(10% 0 65% 0); transform: translate(-1px, 1px); }
+    80% { clip-path: inset(70% 0 0 0); transform: translate(1px, -1px); }
   }
-  .glitch-box:hover::before { left: 120%; }
 
-  /* Animations */
-  @keyframes float { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-10px);} }
-  @keyframes glitch-anim { 0%{ transform: translate(0);} 25%{ transform: translate(-2px,2px);} 50%{ transform: translate(2px,-2px);} 75%{ transform: translate(-2px,-2px);} 100%{ transform: translate(0);} }
-  @keyframes glitch-effect { 0%,100%{ clip-path: inset(0); transform: none;} 20%{ clip-path: inset(10% 0 75% 0); transform: translate(-2px,0);} 40%{ clip-path: inset(80% 0 0 0); transform: translate(2px,0);} 60%{ clip-path: inset(10% 0 75% 0); transform: translate(-2px,0);} 80%{ clip-path: inset(80% 0 0 0); transform: translate(2px,0);} }
-  @keyframes neon-flicker { 0%,19%,21%,23%,25%,54%,56%,100%{ text-shadow: 0 0 5px #fff,0 0 10px #fff,0 0 20px #0ff,0 0 40px #0ff;} 20%,24%,55%{ text-shadow: none;} }
-  .neon-flicker { animation: neon-flicker 1.5s infinite alternate; }
-  .neon-glow { text-shadow: 0 0 5px #0ff,0 0 10px #0ff; }
+  /* Neon Effects */
+  .neon-glow { text-shadow: 0 0 5px var(--neon-cyan), 0 0 12px var(--neon-cyan), 0 0 20px var(--neon-magenta); }
+  .neon-pulse { animation: neon-pulse 4s ease-in-out infinite; }
+  @keyframes neon-pulse {
+    0%, 100% { filter: drop-shadow(0 0 4px var(--neon-cyan)); }
+    50% { filter: drop-shadow(0 0 12px var(--neon-magenta)); }
+  }
+  .neon-border { box-shadow: 0 0 8px var(--neon-cyan), 0 0 16px var(--neon-magenta) inset; }
+  .neon-border:hover { box-shadow: 0 0 12px var(--neon-magenta), 0 0 24px var(--neon-cyan) inset; }
 
-  .terminal-line { font-family: 'Courier New', monospace; letter-spacing: 1px; }
+  /* Float Animation */
+  @keyframes float-glow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .animate-float-glow { animation: float-glow 6s ease-in-out infinite; }
+
+  /* Terminal and Cursor */
+  .terminal-line { font-family: 'Courier New', monospace; letter-spacing: 2px; }
   .blinking-cursor { animation: blink 1s step-end infinite; }
-  @keyframes blink { from, to{ opacity:1;} 50%{ opacity:0;} }
+  @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  // Particle System (slightly faster)
+  // Particle System with Trails and Enhanced Mouse Interaction
   const canvas = document.getElementById('particleCanvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   const particles = [];
-  const colors = ['#00ffff','#ff00ff','#00ff00','#ffff00'];
-  const maxParticles = 100;
+  const colors = ['#00ffff', '#ff00cc', '#cc00ff', '#ff66cc'];
+  const maxParticles = 90;
+
   class Particle {
-    constructor(){
-      this.x = Math.random()*canvas.width;
-      this.y = Math.random()*canvas.height;
-      this.size = Math.random()*2 + 0.5;
-      this.color = colors[Math.floor(Math.random()*colors.length)];
-      this.speedX = Math.random()*2 - 1;
-      this.speedY = Math.random()*2 - 1;
-      this.opacity = Math.random()*0.5 + 0.1;
-      this.life = Math.random()*200 + 100;
+    constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2.5 + 1;
+      this.color = colors[Math.floor(Math.random() * colors.length)];
+      this.speedX = Math.random() * 0.3 - 0.15;
+      this.speedY = Math.random() * 0.3 - 0.15;
+      this.opacity = Math.random() * 0.4 + 0.3;
+      this.life = Math.random() * 500 + 200;
+      this.trail = [];
+      this.maxTrailLength = 18;
+      this.glow = 0;
     }
-    update(){
-      if(this.x<0||this.x>canvas.width) this.speedX*=-1;
-      if(this.y<0||this.y>canvas.height) this.speedY*=-1;
+    update(mouseX, mouseY) {
+      this.trail.push({ x: this.x, y: this.y, opacity: this.opacity });
+      if (this.trail.length > this.maxTrailLength) this.trail.shift();
       this.x += this.speedX;
       this.y += this.speedY;
+      if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
       this.life--;
-      if(this.life<=0){this.x=Math.random()*canvas.width;this.y=Math.random()*canvas.height;this.life=Math.random()*200+100;}
+      if (this.life <= 0) {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.life = Math.random() * 500 + 200;
+        this.trail = [];
+      }
+      // Mouse interaction glow
+      if (mouseX && mouseY) {
+        const dx = mouseX - this.x;
+        const dy = mouseY - this.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 100) {
+          this.glow = 1 - dist / 100;
+          this.speedX += dx * 0.008;
+          this.speedY += dy * 0.008;
+          // Cap speed to prevent jitter
+          this.speedX = Math.min(Math.max(this.speedX, -0.3), 0.3);
+          this.speedY = Math.min(Math.max(this.speedY, -0.3), 0.3);
+        } else {
+          this.glow = 0;
+        }
+      }
     }
-    draw(){
-      ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
-      ctx.fillStyle=this.color;ctx.globalAlpha=this.opacity;ctx.fill();ctx.globalAlpha=1;
+    draw() {
+      // Draw trail
+      ctx.beginPath();
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = this.size * 0.4;
+      this.trail.forEach((point, i) => {
+        ctx.globalAlpha = point.opacity * (i / this.maxTrailLength) * 0.5;
+        if (i === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      // Draw particle with glow
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size + this.glow * 2, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.globalAlpha = this.opacity + this.glow * 0.2;
+      ctx.fill();
+      ctx.globalAlpha = 1;
     }
   }
-  function init(){for(let i=0;i<maxParticles;i++)particles.push(new Particle());}
-  function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);
-    particles.forEach(p=>{p.update();p.draw();});
-    for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.hypot(dx,dy);if(d<100){ctx.beginPath();ctx.strokeStyle=particles[i].color;ctx.globalAlpha=0.2*(1-d/100);ctx.lineWidth=0.4;ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();ctx.globalAlpha=1;}}requestAnimationFrame(animate);}  window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});  init();animate();
 
-  // Slower glitch overlay flicker
-  setInterval(()=>{document.querySelector('.glitch-overlay').style.opacity=Math.random()>0.85?'0.15':'0.05';},1000);
+  function init() {
+    for (let i = 0; i < maxParticles; i++) particles.push(new Particle());
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.update(mouseX, mouseY);
+      p.draw();
+    });
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 100) {
+          ctx.beginPath();
+          ctx.strokeStyle = particles[i].color;
+          ctx.globalAlpha = 0.2 * (1 - dist / 100);
+          ctx.lineWidth = 0.4;
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  // Mouse interaction
+  let mouseX = null;
+  let mouseY = null;
+  window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  init();
+  animate();
+
+  // Footer Typing Animation with Glitch
+  const footerText = '© 2025 MOMENTZ. ALL RIGHTS RESERVED.';
+  let i = 0;
+  const typingText = document.getElementById('typing-text');
+  function typeFooter() {
+    if (i < footerText.length) {
+      typingText.textContent += footerText.charAt(i);
+      if (Math.random() > 0.99) {
+        typingText.style.color = '#ff00cc';
+        setTimeout(() => typingText.style.color = '#ff66cc', 200);
+      }
+      i++;
+      setTimeout(typeFooter, 200);
+    }
+  }
+  window.onload = typeFooter;
 </script>
 {% endblock %}
 

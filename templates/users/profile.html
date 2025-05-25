@@ -4,164 +4,300 @@
 {% block title %}{{ profile.username }}'s Profile - Momentz{% endblock %}
 
 {% block content %}
-<div class="container mx-auto p-4">
-    <!-- Profile Card -->
-    <div class="cyber-card p-6 mb-8 border border-neon-cyan shadow-lg transition-all duration-300 hover:shadow-neon">
-        <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-            <div class="flex-shrink-0">
-                <img src="{{ profile.picture_url|default:'/static/images/default_avatar.jpg' }}" 
-                     class="rounded-full border-4 border-neon-purple w-32 h-32 object-cover shadow-md">
-            </div>
-            <div class="flex-grow text-center md:text-left">
-                <h2 class="text-3xl font-bold text-neon-cyan glitch-effect" data-text="{{ profile.username }}">
-                    {{ profile.username }}
-                </h2>
-                {% if profile.full_name %}<p class="text-neon-purple text-lg mt-1">{{ profile.full_name }}</p>{% endif %}
-                {% if profile.bio %}<p class="text-gray-300 mt-3 italic">{{ profile.bio }}</p>{% endif %}
-
-                <!-- Stats -->
-                <div class="flex justify-center md:justify-start space-x-8 mt-6 text-neon-pink">
-                    <div class="text-center">
-                        <span class="block text-2xl font-bold">{{ profile.post_count }}</span>
-                        <span class="text-sm">POSTS</span>
-                    </div>
-                    <div class="text-center">
-                        <span class="block text-2xl font-bold">{{ profile.followers_count }}</span>
-                        <span class="text-sm">FOLLOWERS</span>
-                    </div>
-                    <div class="text-center">
-                        <span class="block text-2xl font-bold">{{ profile.following_count }}</span>
-                        <span class="text-sm">FOLLOWING</span>
+<div class="container mx-auto px-4 py-8">
+    <!-- Profile Header -->
+    <div class="cyber-profile-header relative overflow-hidden mb-10">
+        <div class="cyber-card p-6 border-2 border-neon-cyan rounded-lg glow-hover">
+            <div class="flex flex-col md:flex-row items-center gap-8">
+                <!-- Avatar -->
+                <div class="relative">
+                    <img src="{{ profile.picture_url|default:'/static/images/default_avatar.jpg' }}" 
+                         class="w-32 h-32 rounded-full border-4 border-neon-purple object-cover neon-glow">
+                    {% if profile.is_online %}
+                    <span class="absolute bottom-2 right-2 w-4 h-4 bg-neon-cyan rounded-full border-2 border-dark-bg pulse-animation"></span>
+                    {% endif %}
+                </div>
+                
+                <!-- Profile Info -->
+                <div class="flex-1 text-center md:text-left">
+                    <h1 class="text-4xl font-bold text-neon-cyan mb-2 glitch-text" data-text="{{ profile.username }}">
+                        {{ profile.username }}
+                    </h1>
+                    
+                    {% if profile.full_name %}
+                    <p class="text-xl text-neon-pink mb-4">{{ profile.full_name }}</p>
+                    {% endif %}
+                    
+                    {% if profile.bio %}
+                    <p class="text-gray-300 mb-6 max-w-2xl">{{ profile.bio }}</p>
+                    {% endif %}
+                    
+                    <!-- Stats -->
+                    <div class="flex justify-center md:justify-start space-x-8">
+                        <div class="text-center">
+                            <span class="block text-3xl font-bold text-neon-cyan">{{ profile.post_count }}</span>
+                            <span class="text-neon-pink uppercase text-sm tracking-wider">Posts</span>
+                        </div>
+                        <div class="text-center">
+                            <span class="block text-3xl font-bold text-neon-cyan">{{ profile.followers_count }}</span>
+                            <span class="text-neon-pink uppercase text-sm tracking-wider">Followers</span>
+                        </div>
+                        <div class="text-center">
+                            <span class="block text-3xl font-bold text-neon-cyan">{{ profile.following_count }}</span>
+                            <span class="text-neon-pink uppercase text-sm tracking-wider">Following</span>
+                        </div>
                     </div>
                 </div>
-
-                {% if request.user.username != profile.username %}
+                
                 <!-- Follow Button -->
-                <form action="{% url 'users:follow_user' profile.user_id %}" method="post" class="mt-6">
-                    {% csrf_token %}
-                    <input type="hidden" name="username" value="{{ profile.username }}">
-                    <button type="submit" class="cyber-btn bg-neon-cyan text-black hover:bg-neon-purple hover:text-white shadow-md">
-                        {% if is_following %}
-                            <i class="fas fa-user-minus"></i> UNFOLLOW
-                        {% else %}
-                            <i class="fas fa-user-plus"></i> FOLLOW
-                        {% endif %}
-                    </button>
-                </form>
+                {% if request.user.username != profile.username %}
+                <div class="mt-4 md:mt-0">
+                    <form action="{% url 'users:follow_user' profile.user_id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="cyber-btn neon-btn {% if is_following %}bg-neon-magenta{% else %}bg-neon-cyan{% endif %}">
+                            <span class="glitch-text" data-text="{% if is_following %}UNFOLLOW{% else %}FOLLOW{% endif %}">
+                                {% if is_following %}UNFOLLOW{% else %}FOLLOW{% endif %}
+                            </span>
+                        </button>
+                    </form>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Posts Grid -->
+    {% if posts %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for post in posts %}
-        <div class="cyber-card border border-neon-cyan hover:border-neon-purple bg-gray-950 shadow-md hover:shadow-lg transition duration-300">
-            {% if post.image_url %}
-            <div class="relative overflow-hidden rounded-t" style="padding-top: 100%;">
-                <img src="{{ post.image_url }}" 
-                     class="absolute top-0 left-0 w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
-                     alt="Post image">
-            </div>
-            {% endif %}
-            <div class="p-4 flex flex-col justify-between h-full">
-                <p class="text-neon-cyan text-sm">{{ post.content|truncatechars:100 }}</p>
-                <div class="flex justify-between items-center mt-4">
-                    <div class="flex space-x-3 text-neon-pink text-xs">
-                        <span>{{ post.like_count }} ♥</span>
-                        <span>{{ post.comment_count }} 💬</span>
-                    </div>
-                    <div class="flex space-x-2">
-                        <form action="{% url 'posts:like' post.post_id %}" method="post" class="like-form" data-post-id="{{ post.post_id }}">
-                            {% csrf_token %}
-                            <button type="submit" class="cyber-btn-sm {% if post.is_liked %}bg-neon-pink{% endif %}" id="like-btn-{{ post.post_id }}">
-                                {% if post.is_liked %}♥{% else %}♡{% endif %}
-                            </button>
-                        </form>
-                        <a href="{% url 'posts:post_detail' post.post_id %}" class="cyber-btn-sm bg-neon-cyan text-black hover:bg-neon-purple hover:text-white">
-                            VIEW
-                        </a>
+        <div class="cyber-post-card relative group">
+            <a href="{% url 'posts:post_detail' post.post_id %}">
+                {% if post.image_url %}
+                <div class="aspect-square overflow-hidden">
+                    <img src="{{ post.image_url }}" 
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                    <div class="image-overlay"></div>
+                </div>
+                {% endif %}
+                
+                <div class="cyber-post-info p-4">
+                    <p class="text-gray-300 text-sm mb-3 line-clamp-3">{{ post.content }}</p>
+                    <div class="flex justify-between items-center text-xs">
+                        <div class="flex space-x-4 text-neon-pink">
+                            <span>{{ post.like_count }} ♥</span>
+                            <span>{{ post.comment_count }} 💬</span>
+                        </div>
+                        <span class="text-neon-cyan">{{ post.created_at|timesince }} ago</span>
                     </div>
                 </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="col-span-3 text-center py-10">
-            <p class="text-neon-cyan text-xl">NO POSTS YET</p>
-            <p class="text-gray-400 mt-2">When {{ profile.username }} posts, you'll see it here</p>
+            </a>
+            
+            <!-- Like Button -->
+            <form action="{% url 'posts:like' post.post_id %}" method="post" 
+                  class="like-form absolute top-4 right-4 z-10" 
+                  data-post-id="{{ post.post_id }}">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="cyber-btn-circle {% if post.is_liked %}bg-neon-pink{% else %}bg-dark-bg{% endif %}">
+                    ♥
+                </button>
+            </form>
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="cyber-empty-state text-center py-16">
+        <div class="text-6xl mb-4 text-neon-purple">📸</div>
+        <h3 class="text-2xl font-bold text-neon-cyan mb-2">No Posts Yet</h3>
+        <p class="text-gray-400 max-w-md mx-auto">
+            When {{ profile.username }} shares their first moment, it'll appear here
+        </p>
+    </div>
+    {% endif %}
 </div>
 
-<!-- Styles -->
 <style>
-.glitch-effect {
-    position: relative;
-    display: inline-block;
-}
-
-.glitch-effect::before,
-.glitch-effect::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 0;
-    opacity: 0.6;
-    color: #ff00ff;
-    pointer-events: none;
-    z-index: -1;
-}
-
-.glitch-effect::before {
-    transform: translate(1px, -1px);
-}
-
-.glitch-effect::after {
-    transform: translate(-1px, 1px);
-}
-
-.glitch-effect:hover::before,
-.glitch-effect:hover::after {
-    animation: glitch 0.2s infinite;
-}
-
-@keyframes glitch {
-    0% { transform: translate(1px, -1px); }
-    20% { transform: translate(-2px, 2px); }
-    40% { transform: translate(2px, 2px); }
-    60% { transform: translate(-1px, -2px); }
-    80% { transform: translate(1px, 2px); }
-    100% { transform: translate(0, 0); }
-}
-
-.cyber-card {
-    background-color: #0f0f1a;
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.cyber-btn-sm {
-    padding: 0.3rem 0.75rem;
-    font-size: 0.75rem;
-    border-radius: 0.3rem;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
-
-.cyber-btn {
-    padding: 0.5rem 1rem;
-    font-weight: bold;
-    border-radius: 0.375rem;
-    transition: all 0.3s ease;
-}
-
-.cyber-btn:hover, .cyber-btn-sm:hover {
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-}
-
-.shadow-neon {
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
-}
+    /* Profile Header */
+    .cyber-profile-header {
+        background: linear-gradient(135deg, rgba(10,10,25,0.8) 0%, rgba(40,10,50,0.8) 100%);
+        border-radius: 0.5rem;
+    }
+    
+    /* Cyber Card */
+    .cyber-card {
+        background: rgba(15,15,30,0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0,255,255,0.2);
+        box-shadow: 0 0 20px rgba(0,255,255,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .glow-hover:hover {
+        box-shadow: 0 0 30px rgba(255,0,204,0.3);
+        border-color: rgba(255,0,204,0.4);
+    }
+    
+    /* Neon Glow */
+    .neon-glow {
+        box-shadow: 0 0 10px rgba(204,0,255,0.5);
+    }
+    
+    /* Online Indicator */
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(0,255,255,0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(0,255,255,0); }
+        100% { box-shadow: 0 0 0 0 rgba(0,255,255,0); }
+    }
+    
+    /* Post Cards */
+    .cyber-post-card {
+        background: rgba(20,20,35,0.8);
+        border: 1px solid rgba(0,255,255,0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .cyber-post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,255,255,0.1);
+        border-color: rgba(255,0,204,0.3);
+    }
+    
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+    
+    .cyber-post-card:hover .image-overlay {
+        opacity: 0.5;
+    }
+    
+    .cyber-post-info {
+        background: rgba(10,10,20,0.8);
+    }
+    
+    /* Buttons */
+    .cyber-btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .neon-btn {
+        box-shadow: 0 0 10px rgba(0,255,255,0.5);
+    }
+    
+    .cyber-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 20px currentColor;
+    }
+    
+    .cyber-btn-circle {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        border: 1px solid rgba(255,0,204,0.5);
+        transition: all 0.3s ease;
+    }
+    
+    .cyber-btn-circle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(255,0,204,0.5);
+    }
+    
+    /* Glitch Text */
+    .glitch-text {
+        position: relative;
+    }
+    
+    .glitch-text::before, .glitch-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.8;
+    }
+    
+    .glitch-text::before {
+        color: var(--neon-cyan);
+        z-index: -1;
+        animation: glitch 3s infinite;
+    }
+    
+    .glitch-text::after {
+        color: var(--neon-purple);
+        z-index: -2;
+        animation: glitch 2s infinite reverse;
+    }
+    
+    @keyframes glitch {
+        0%, 100% { transform: translate(0); }
+        20% { transform: translate(-2px, 2px); }
+        40% { transform: translate(-2px, -2px); }
+        60% { transform: translate(2px, 2px); }
+        80% { transform: translate(2px, -2px); }
+    }
+    
+    /* Empty State */
+    .cyber-empty-state {
+        background: rgba(15,15,30,0.5);
+        border: 1px dashed rgba(0,255,255,0.3);
+        border-radius: 0.5rem;
+    }
 </style>
+
+<script>
+    // Like button functionality
+    document.querySelectorAll('.like-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const postId = this.dataset.postId;
+            const likeBtn = this.querySelector('button');
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'liked') {
+                    likeBtn.classList.add('bg-neon-pink');
+                    likeBtn.classList.remove('bg-dark-bg');
+                } else {
+                    likeBtn.classList.remove('bg-neon-pink');
+                    likeBtn.classList.add('bg-dark-bg');
+                }
+                // Update like count display if needed
+                const likeCountElement = document.querySelector(`[data-post-id="${postId}"] .like-count`);
+                if (likeCountElement) {
+                    likeCountElement.textContent = data.like_count;
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}
