@@ -161,45 +161,61 @@ from django.shortcuts import render, get_object_or_404
 from django.db import connection
 from django.contrib.auth.decorators import login_required
 
+
 @login_required
 def post_detail(request, post_id):
     try:
         with connection.cursor() as cursor:
-            # Get post details
-            cursor.execute("""
-                SELECT P.post_id, P.content, P.image_url, P.created_at,
-                       U.user_id, U.username, U.full_name, U.picture_url,
-                       (SELECT COUNT(*) FROM Likes L WHERE L.post_id = P.post_id) AS like_count,
-                       (SELECT COUNT(*) FROM Comments C WHERE C.post_id = P.post_id) AS comment_count
+            cursor.execute(
+                """
+                SELECT 
+                    P.post_id, P.content, P.image_url, P.created_at,
+                    U.user_id AS author_id, U.username AS author_username,
+                    U.full_name AS author_full_name, U.picture_url AS author_picture_url,
+                    (SELECT COUNT(*) FROM Likes L WHERE L.post_id = P.post_id) AS like_count,
+                    (SELECT COUNT(*) FROM Comments C WHERE C.post_id = P.post_id) AS comment_count,
+                    (SELECT 1 FROM Likes L WHERE L.post_id = P.post_id AND L.user_id = %s) AS is_liked
                 FROM Posts P
                 JOIN Users U ON P.user_id = U.user_id
                 WHERE P.post_id = %s
-            """, [post_id])
-            
+                """,
+                [request.user.user_id, post_id],
+            )
             columns = [col[0] for col in cursor.description]
-            post = dict(zip(columns, cursor.fetchone()))
-            
-            # Get comments
-            cursor.execute("""
-                SELECT C.comment_id, C.content, C.created_at,
-                       U.user_id, U.username, U.full_name, U.picture_url
+            post_data = cursor.fetchone()
+            if not post_data:
+                return HttpResponse("Post not found", status=404)
+            post = dict(zip(columns, post_data))
+            print(f"Raw post data: {post_data}")  # Debug
+            print(f"Post dict: {post}")  # Debug
+            post["is_liked"] = bool(post["is_liked"])
+            post["author_username"] = post.get("author_username") or "Unknown"
+
+            cursor.execute(
+                """
+                SELECT 
+                    C.comment_id, C.content, C.created_at,
+                    U.user_id AS commenter_id, U.username AS commenter_username,
+                    U.full_name AS commenter_full_name, U.picture_url AS commenter_picture_url
                 FROM Comments C
                 JOIN Users U ON C.user_id = U.user_id
                 WHERE C.post_id = %s
-                ORDER BY C.created_at DESC
-            """, [post_id])
-            
-            comments = [dict(zip([col[0] for col in cursor.description], row)) 
-                      for row in cursor.fetchall()]
-            
-        return render(request, "posts/post_detail.html", {
-            "post": post,
-            "comments": comments
-        })
-        
+                ORDER BY C.created_at ASC
+                """,
+                [post_id],
+            )
+            columns = [col[0] for col in cursor.description]
+            comments = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            print(f"Comments: {comments}")  # Debug
+            for comment in comments:
+                comment["commenter_username"] = comment.get("commenter_username") or "Unknown"
+
+        return render(
+            request, "posts/post_detail.html", {"post": post, "comments": comments}
+        )
     except Exception as e:
-        return render(request, "error.html", {"message": str(e)}) 
-    
+        messages.error(request, f"Error loading post: {str(e)}")
+        return redirect("users:home")
 
 
 @login_required
