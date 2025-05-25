@@ -8,42 +8,48 @@ from django.http import JsonResponse
 
 @login_required
 def create_post(request):
-    if request.method == 'POST':
-        content = request.POST.get('content', '').strip()
-        image_url = request.POST.get('image_url', '').strip() or None
-        
+    if request.method == "POST":
+        content = request.POST.get("content", "").strip()
+        image_url = request.POST.get("image_url", "").strip() or None
+
         if not content:
             messages.error(request, "Post content cannot be empty")
-            return render(request, "posts/create_post.html", {
-                'content': content,
-                'image_url': image_url
-            })
-            
+            return render(
+                request,
+                "posts/create_post.html",
+                {"content": content, "image_url": image_url},
+            )
+
         try:
             with connection.cursor() as cursor:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO Posts (user_id, content, image_url, created_at)
                     VALUES (%s, %s, %s, NOW())
                     RETURNING post_id
-                """, [request.user.user_id, content, image_url])
-                
+                """,
+                    [request.user.user_id, content, image_url],
+                )
+
                 post_id = cursor.fetchone()[0]
                 messages.success(request, "Post created successfully!")
-                return redirect('post_detail', post_id=post_id)
-                
+                return redirect("post_detail", post_id=post_id)
+
         except Exception as e:
             messages.error(request, "Failed to create post. Please try again.")
             # Log the actual error for debugging
             print(f"Error creating post: {str(e)}")
-    
+
     return render(request, "posts/create_post.html")
+
 
 @login_required
 def post_detail(request, post_id):
     try:
         with connection.cursor() as cursor:
             # Get post with author info
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT P.*, U.username, U.full_name, U.picture_url,
                        (SELECT COUNT(*) FROM Likes WHERE post_id = P.post_id) as like_count,
                        (SELECT COUNT(*) FROM Comments WHERE post_id = P.post_id) as comment_count
