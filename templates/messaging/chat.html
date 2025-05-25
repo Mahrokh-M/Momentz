@@ -4,44 +4,47 @@
 {% block title %}Chat with {{ receiver_username }} - Momentz{% endblock %}
 
 {% block content %}
+
 <div class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-6 text-gray-800">Chat with {{ receiver_username }}</h1>
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div id="chat-container" class="p-4 max-h-96 overflow-y-auto" style="scroll-behavior: smooth;">
+    <h1 class="text-3xl font-bold mb-6 text-neon-cyan glitch-effect" data-text="Chat with {{ receiver_username }}">Chat with {{ receiver_username }}</h1>
+    <div class="cyber-card">
+        <div id="chat-container" class="p-4 max-h-96 overflow-y-auto cyber-scroll">
             {% for msg in messages %}
                 <div class="message mb-4 {% if msg.sender.user_id == request.user.user_id %}sent{% else %}received{% endif %}" 
                      data-message-id="{{ msg.message_id }}">
                     <div class="flex {% if msg.sender.user_id == request.user.user_id %}justify-end{% else %}justify-start{% endif %} items-center space-x-2">
                         {% if msg.sender.user_id != request.user.user_id %}
                             <img src="{% if receiver_picture_url and receiver_picture_url|length > 0 %}{{ receiver_picture_url }}{% else %}{% static 'images/default_avatar.jpg' %}{% endif %}" 
-                                 alt="Receiver Avatar" class="w-8 h-8 rounded-full">
+                                 class="w-8 h-8 rounded-full border border-neon-cyan">
                         {% endif %}
-                        <div class="max-w-xs p-3 rounded-lg {% if msg.sender.user_id == request.user.user_id %}bg-blue-500 text-white{% else %}bg-gray-200 text-gray-800{% endif %}">
+                        <div class="max-w-xs p-3 rounded-lg {% if msg.sender.user_id == request.user.user_id %}bg-cyan-900 text-neon-cyan border border-neon-cyan{% else %}bg-gray-900 text-neon-pink border border-neon-purple{% endif %}">
                             <p class="text-sm">{{ msg.content }}</p>
-                            <p class="text-xs mt-1 opacity-75">{{ msg.sent_at|date:"M d, Y H:i" }}</p>
+                            <p class="text-xs mt-1 {% if msg.sender.user_id == request.user.user_id %}text-neon-cyan{% else %}text-neon-purple{% endif %}">{{ msg.sent_at|date:"M d, Y H:i" }}</p>
                         </div>
                         {% if msg.sender.user_id == request.user.user_id %}
                             <img src="{% if user_picture_url and user_picture_url|length > 0 %}{{ user_picture_url }}{% else %}{% static 'images/default_avatar.jpg' %}{% endif %}" 
-                                 alt="Your Avatar" class="w-8 h-8 rounded-full">
+                                 class="w-8 h-8 rounded-full border border-neon-purple">
                         {% endif %}
                     </div>
                 </div>
             {% empty %}
-                <p class="text-gray-600 text-center py-4">No messages yet. Start a conversation!</p>
+                <p class="text-neon-cyan text-center py-4">No messages yet. Start a conversation!</p>
             {% endfor %}
         </div>
-        <div class="p-4 border-t">
+        <div class="p-4 border-t border-neon-cyan">
             <form id="message-form" class="flex space-x-2">
                 <input type="hidden" name="receiver_id" value="{{ receiver_id }}">
-                <textarea id="message-content" name="content" class="w-full p-2 border rounded-lg resize-none" rows="2" 
+                <textarea id="message-content" name="content" class="w-full p-2 rounded-lg resize-none cyber-input" rows="2" 
                           placeholder="Type a message..." required></textarea>
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">Send</button>
+                <button type="submit" class="cyber-btn px-4 py-2">Send</button>
             </form>
         </div>
     </div>
 </div>
 
 <meta name="csrf-token" content="{{ csrf_token }}">
+<meta name="user-id" content="{{ request.user.user_id }}">
+<meta name="default-avatar" content="{% static 'images/default_avatar.jpg' %}">
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const chatContainer = document.getElementById('chat-container');
@@ -51,6 +54,39 @@
 <script src="{% static 'js/messaging.js' %}"></script>
 
 <style>
+.cyber-card {
+    background-color: rgba(20, 20, 30, 0.8);
+    border: 1px solid var(--neon-cyan);
+    border-radius: 0;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.cyber-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+.cyber-scroll::-webkit-scrollbar-thumb {
+    background: var(--neon-purple);
+    border-radius: 4px;
+}
+.cyber-scroll::-webkit-scrollbar-track {
+    background: rgba(10, 10, 20, 0.5);
+}
+
+.cyber-input {
+    background-color: rgba(10, 10, 20, 0.8);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    border-radius: 0;
+    padding: 0.75rem 1rem;
+}
+.cyber-input:focus {
+    background-color: rgba(15, 15, 25, 0.8);
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 0 0.25rem rgba(255, 0, 255, 0.1);
+    color: white;
+    outline: none;
+}
+
 .message.sent { 
     animation: slideRight 0.3s ease-out; 
 }
@@ -65,15 +101,43 @@
     from { transform: translateX(-20px); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
-#chat-container::-webkit-scrollbar {
-    width: 8px;
+
+.bg-neon-gradient {
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
 }
-#chat-container::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
+/* Add this to your styles if you want more glow effects */
+.bg-cyan-900 {
+    background-color: rgba(0, 60, 72, 0.8);
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
 }
-#chat-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
+
+.bg-gray-900 {
+    background-color: rgba(20, 20, 30, 0.9);
+    box-shadow: 0 0 8px rgba(255, 0, 255, 0.3);
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+.spinner-border {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    vertical-align: text-bottom;
+    border: 0.15em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border .75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
 }
 </style>
 {% endblock %}

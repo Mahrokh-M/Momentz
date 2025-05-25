@@ -20,16 +20,15 @@ def notifications(request):
         return redirect("notifications:notifications")
     try:
         with connection.cursor() as cursor:
-            # Fetch all notifications for the user (both read and unread)
+            # Fetch only unread notifications using the GetUnreadNotifications function
             cursor.execute(
                 """
                 SELECT 
-                    N.notification_id, N.user_id, N.related_user_id, N.related_post_id,
-                    N.notification_type, N.content, N.created_at, N.is_read,
+                    N.notification_id, N.related_user_id, N.related_post_id,
+                    N.notification_type, N.content, N.created_at,
                     U.username AS related_user_username
-                FROM Notifications N
+                FROM dbo.GetUnreadNotifications(%s) N
                 JOIN Users U ON U.user_id = N.related_user_id
-                WHERE N.user_id = %s
                 ORDER BY N.created_at DESC
                 """,
                 [user_id],

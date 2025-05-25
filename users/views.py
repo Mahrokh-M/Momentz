@@ -4,8 +4,8 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.contrib import messages
-from django.contrib.auth.hashers import make_password, check_password
 from .models import User
+from django.http import JsonResponse
 
 
 def homepage(request):
@@ -40,44 +40,28 @@ def home(request):
             posts = [dict(zip(columns, row)) for row in cursor.fetchall()]
             for post in posts:
                 post["is_liked"] = bool(post["is_liked"])
-
         # Count the number of users the current user is following
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT COUNT(*) FROM Followers WHERE follower_user_id = %s", [user_id]
             )
             following_count = cursor.fetchone()[0]
-
-        # Debug information
-        post_dict = {post["post_id"]: post for post in posts}
-
-        # Debug logging
-        print(f"User ID: {user_id}")
-        print(f"Posts: {posts}")
-        print(f"Following Count: {following_count}")
-        print(f"Post Dict: {post_dict}")
-
         return render(
             request,
             "users/home.html",
             {
                 "posts": posts,
                 "following_count": following_count,
-                "debug": True,
-                "post_dict": post_dict if posts else None,
             },
         )
     except Exception as e:
         messages.error(request, f"Error loading feed: {str(e)}")
-        print(f"Error in home view: {str(e)}")
         return render(
             request,
             "users/home.html",
             {
                 "posts": [],
                 "following_count": 0,
-                "debug": True,
-                "post_dict": None,
             },
         )
 
@@ -95,14 +79,12 @@ def profile(request, username):
             if not profile_data:
                 return HttpResponse("User not found", status=404)
             profile = dict(zip(columns, profile_data))
-
             # Check if current user follows this profile
             cursor.execute(
                 "SELECT dbo.IsFollowing(%s, %s) AS is_following",
                 [request.user.user_id, profile["user_id"]],
             )
             is_following = cursor.fetchone()[0]
-
             # Query posts for the user
             cursor.execute(
                 """
@@ -120,7 +102,6 @@ def profile(request, username):
             posts = [dict(zip(columns, row)) for row in cursor.fetchall()]
             for post in posts:
                 post["is_liked"] = bool(post["is_liked"])
-
         return render(
             request,
             "users/profile.html",
@@ -140,14 +121,37 @@ def login_view(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
         try:
-            user = User.objects.get(username=username)
-            if user.check_password(password):
-                auth_login(request, user, backend="users.auth.SQLServerAuthBackend")
-                return redirect("users:home")
-            else:
-                messages.error(request, "Invalid password")
-        except User.DoesNotExist:
-            messages.error(request, "Username not found")
+            with connection.cursor() as cursor:
+                # Fetch user from database
+                cursor.execute(
+                    """
+                    SELECT user_id, username, email, password_hash, full_name, created_at
+                    FROM Users
+                    WHERE username = %s
+                    """,
+                    [username],
+                )
+                row = cursor.fetchone()
+                if not row:
+                    messages.error(request, "Username not found")
+                    return render(request, "users/login.html")
+                # Create a User instance from the database row
+                user = User(
+                    user_id=row[0],
+                    username=row[1],
+                    email=row[2],
+                    password_hash=row[3],
+                    full_name=row[4],
+                    created_at=row[5],
+                )
+                # Check plain-text password
+                if password == user.password_hash:
+                    auth_login(request, user, backend="users.auth.SQLServerAuthBackend")
+                    return redirect("users:home")
+                else:
+                    messages.error(request, "Invalid password")
+        except Exception as e:
+            messages.error(request, f"Login failed: {str(e)}")
     return render(request, "users/login.html")
 
 
@@ -175,12 +179,11 @@ def register_view(request):
                             "full_name": full_name,
                         },
                     )
-                # Insert new user
-                hashed_pw = make_password(password)
+                # Insert new user with plain-text password
                 cursor.execute(
                     "INSERT INTO Users (username, email, password_hash, full_name, created_at) "
                     "VALUES (%s, %s, %s, %s, GETDATE())",
-                    [username, email, hashed_pw, full_name],
+                    [username, email, password, full_name],
                 )
                 # Get the new user
                 cursor.execute(
@@ -227,23 +230,36 @@ def follow_user(request, user_id):
                         "DELETE FROM Followers WHERE follower_user_id = %s AND following_user_id = %s",
                         [request.user.user_id, user_id],
                     )
-                    messages.success(request, "Successfully unfollowed user")
+                    action = "unfollowed"
+                    message = "Successfully unfollowed user"
                 else:
                     # Follow
                     cursor.execute(
                         "EXEC sp_FollowUser %s, %s", [request.user.user_id, user_id]
                     )
-                    messages.success(request, "Successfully followed user")
-                # Update follow status
+                    action = "followed"
+                    message = "Successfully followed user"
+                # Get updated follow status
                 cursor.execute(
                     "SELECT dbo.IsFollowing(%s, %s) AS is_following",
                     [request.user.user_id, user_id],
                 )
                 is_following = cursor.fetchone()[0]
+                return JsonResponse(
+                    {
+                        "status": "success",
+                        "message": message,
+                        "action": action,
+                        "is_following": is_following,
+                    }
+                )
         except Exception as e:
-            messages.error(request, f"Error: {str(e)}")
-        return redirect(request.META.get("HTTP_REFERER", "users:home"))
-    return redirect("users:home")
+            return JsonResponse(
+                {"status": "error", "message": f"Error: {str(e)}"}, status=400
+            )
+    return JsonResponse(
+        {"status": "error", "message": "Invalid request method"}, status=400
+    )
 
 
 @login_required
@@ -278,7 +294,7 @@ def create_post(request):
             messages.error(request, "Content is required")
             return render(
                 request,
-                "users/create_post.html",
+                "posts/create_post.html",
                 {
                     "content": content,
                     "image_url": image_url,
@@ -293,7 +309,7 @@ def create_post(request):
                     messages.error(request, f"Invalid user_id: {request.user.user_id}")
                     return render(
                         request,
-                        "users/create_post.html",
+                        "posts/create_post.html",
                         {
                             "content": content,
                             "image_url": image_url,
@@ -310,7 +326,7 @@ def create_post(request):
             messages.error(request, f"Failed to create post: {str(e)}")
             return render(
                 request,
-                "users/create_post.html",
+                "posts/create_post.html",
                 {
                     "content": content,
                     "image_url": image_url,
@@ -345,7 +361,6 @@ def post_detail(request, post_id):
                 return HttpResponse("Post not found", status=404)
             post = dict(zip(columns, post_data))
             post["is_liked"] = bool(post["is_liked"])
-
             # Fetch comments
             cursor.execute(
                 """
@@ -362,7 +377,6 @@ def post_detail(request, post_id):
             )
             columns = [col[0] for col in cursor.description]
             comments = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
         return render(
             request, "posts/post_detail.html", {"post": post, "comments": comments}
         )

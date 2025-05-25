@@ -108,46 +108,75 @@ def chat(request, username):
 @require_POST
 def send_message(request):
     try:
+        # Get data from request
         data = json.loads(request.body)
         receiver_id = data.get("receiver_id")
         content = data.get("content")
         sender_id = request.user.user_id
 
+        # Validate input
         if not content or not receiver_id:
             return JsonResponse(
                 {"status": "error", "message": "Missing required fields"}, status=400
             )
 
-        logger.info(f"Sending message: sender={sender_id}, receiver={receiver_id}")
+        logger.info(f"Sending message from {sender_id} to {receiver_id}")
 
         with connection.cursor() as cursor:
-            cursor.execute(
-                "EXEC sp_SendMessage @senderId=%s, @receiverId=%s, @content=%s",
-                [sender_id, receiver_id, content],
-            )
-            cursor.execute(
-                "SELECT TOP 1 message_id, sent_at FROM Messages WHERE sender_id = %s AND receiver_id = %s ORDER BY sent_at DESC",
-                [sender_id, receiver_id],
-            )
-            new_message = dict(zip(["message_id", "sent_at"], cursor.fetchone()))
+            try:
+                # Execute stored procedure
+                cursor.execute(
+                    "EXEC sp_SendMessage @senderId=%s, @receiverId=%s, @content=%s",
+                    [sender_id, receiver_id, content],
+                )
 
-            sender = User.objects.get(user_id=sender_id)
-            return JsonResponse(
-                {
-                    "status": "success",
-                    "message": {
-                        "content": content,
-                        "sent_at": new_message["sent_at"].isoformat(),
-                        "message_id": new_message["message_id"],
-                        "sender_id": sender_id,
-                        "receiver_id": receiver_id,
-                        "sender_picture_url": sender.picture_url,
-                    },
-                }
-            )
+                # Verify the message was inserted
+                cursor.execute(
+                    """SELECT TOP 1 message_id, sent_at, content 
+                       FROM Messages 
+                       WHERE sender_id = %s AND receiver_id = %s 
+                       ORDER BY sent_at DESC""",
+                    [sender_id, receiver_id],
+                )
+
+                row = cursor.fetchone()
+                if not row:
+                    return JsonResponse(
+                        {"status": "error", "message": "Message not created"},
+                        status=500,
+                    )
+
+                # Get sender info
+                sender = User.objects.get(user_id=sender_id)
+
+                return JsonResponse(
+                    {
+                        "status": "success",
+                        "message": {
+                            "content": row[2],  # content from the query
+                            "sent_at": row[1].isoformat(),  # sent_at from the query
+                            "message_id": row[0],  # message_id from the query
+                            "sender_id": sender_id,
+                            "receiver_id": receiver_id,
+                            "sender_picture_url": sender.picture_url or "",
+                        },
+                    }
+                )
+
+            except Exception as e:
+                logger.error(f"Database error in send_message: {str(e)}")
+                return JsonResponse(
+                    {"status": "error", "message": "Database operation failed"},
+                    status=500,
+                )
+
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
     except Exception as e:
-        logger.error(f"Error in send_message: {str(e)}")
-        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+        logger.error(f"Unexpected error in send_message: {str(e)}")
+        return JsonResponse(
+            {"status": "error", "message": "Internal server error"}, status=500
+        )
 
 
 @login_required
