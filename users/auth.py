@@ -7,7 +7,7 @@ class SQLServerAuthBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         try:
             with connection.cursor() as cursor:
-                # Only check username (removed email check)
+                
                 cursor.execute(
                     "SELECT user_id, password_hash FROM Users WHERE username = %s", 
                     [username]
