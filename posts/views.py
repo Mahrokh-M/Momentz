@@ -83,7 +83,7 @@ def post_detail(request, post_id):
     except Exception as e:
         messages.error(request, "Error loading post")
         print(f"Error loading post: {str(e)}")
-        return redirect('home')
+        return redirect('users:home')
     
     return render(request, "posts/post_detail.html", {
         'post': post,
@@ -151,9 +151,9 @@ def add_comment(request, post_id):
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'message': str(e)}, status=400)
         
-        return redirect(request.META.get('HTTP_REFERER', 'home'))
+        return redirect(request.META.get('HTTP_REFERER', 'users:home'))
     
-    return redirect('home')
+    return redirect('users:home')
 
 
 
@@ -242,6 +242,6 @@ def like_post(request, post_id):
                     'is_liked': is_liked
                 })
         
-        return redirect(request.META.get('HTTP_REFERER', 'home'))
+        return redirect(request.META.get('HTTP_REFERER', 'users:home'))
     
-    return redirect('home')
+    return redirect('users:home')

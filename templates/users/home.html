@@ -24,7 +24,7 @@
             {% endif %}
             <div class="card-body">
                 <div class="post-header mb-3">
-                    <img src="{{ post.author_picture_url|default:'/static/images/default-profile.jpg' }}" 
+                    <img src="{{ post.author_picture_url|default:'/static/images/default_avatar.jpg' }}" 
                          class="rounded-circle" width="40" height="40">
                     <a href="{% url 'users:profile' post.author_username %}" class="ml-2">{{ post.author_full_name }}</a>
                 </div>
