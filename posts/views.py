@@ -3,6 +3,7 @@ from django.db import connection
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.contrib import messages
+from django.http import JsonResponse
 
 @login_required
 def create_post(request):
@@ -90,33 +91,11 @@ def post_detail(request, post_id):
     })
 
 
-
-@login_required
-def like_post(request, post_id):
-    if request.method == 'POST':
-        try:
-            with connection.cursor() as cursor:
-                # Check if already liked
-                cursor.execute(
-                    "SELECT 1 FROM Likes WHERE user_id = %s AND post_id = %s",
-                    [request.user.user_id, post_id]
-                )
-                if cursor.fetchone():
-                    cursor.execute(
-                        "DELETE FROM Likes WHERE user_id = %s AND post_id = %s",
-                        [request.user.user_id, post_id]
-                    )
-                    messages.success(request, "Post unliked")
-                else:
-                    cursor.execute(
-                        "INSERT INTO Likes (user_id, post_id, created_at) VALUES (%s, %s, NOW())",
-                        [request.user.user_id, post_id]
-                    )
-                    messages.success(request, "Post liked")
-        except Exception as e:
-            messages.error(request, f"Error: {str(e)}")
-    
-    return redirect(request.META.get('HTTP_REFERER', 'home'))
+from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import connection
+from django.http import JsonResponse
 
 @login_required
 def add_comment(request, post_id):
@@ -126,20 +105,55 @@ def add_comment(request, post_id):
         
         if not content:
             messages.error(request, "Comment cannot be empty")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Comment cannot be empty'}, status=400)
             return redirect(request.META.get('HTTP_REFERER', 'home'))
             
         try:
             with connection.cursor() as cursor:
+                # Use stored procedure sp_AddComment
                 cursor.execute(
-                    "INSERT INTO Comments (user_id, post_id, content, parent_comment_id, created_at) "
-                    "VALUES (%s, %s, %s, %s, NOW())",
+                    "EXEC sp_AddComment %s, %s, %s, %s",
                     [request.user.user_id, post_id, content, parent_comment_id]
                 )
                 messages.success(request, "Comment added successfully!")
+                
+                # Get the new comment for AJAX response
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    cursor.execute("""
+                        SELECT C.comment_id, C.content, C.created_at,
+                               U.username, U.full_name, U.picture_url
+                        FROM Comments C
+                        JOIN Users U ON C.user_id = U.user_id
+                        WHERE C.comment_id = (SELECT MAX(comment_id) FROM Comments WHERE post_id = %s AND user_id = %s)
+                    """, [post_id, request.user.user_id])
+                    comment = dict(zip([col[0] for col in cursor.description], cursor.fetchone()))
+                    cursor.execute(
+                        "SELECT COUNT(*) FROM Comments WHERE post_id = %s",
+                        [post_id]
+                    )
+                    comment_count = cursor.fetchone()[0]
+                    return JsonResponse({
+                        'success': True,
+                        'comment': {
+                            'comment_id': comment['comment_id'],
+                            'content': comment['content'],
+                            'username': comment['username'],
+                            'full_name': comment['full_name'],
+                            'picture_url': comment['picture_url'] or '/static/images/default-profile.png',
+                            'created_at': comment['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+                        },
+                        'comment_count': comment_count
+                    })
+                
         except Exception as e:
             messages.error(request, f"Error adding comment: {str(e)}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': str(e)}, status=400)
+        
+        return redirect(request.META.get('HTTP_REFERER', 'home'))
     
-    return redirect(request.META.get('HTTP_REFERER', 'home'))
+    return redirect('home')
 
 
 
@@ -184,4 +198,50 @@ def post_detail(request, post_id):
         })
         
     except Exception as e:
-        return render(request, "error.html", {"message": str(e)})
+        return render(request, "error.html", {"message": str(e)}) 
+    
+
+
+@login_required
+def like_post(request, post_id):
+    if request.method == 'POST':
+        try:
+            with connection.cursor() as cursor:
+                # Use stored procedure sp_LikePost
+                cursor.execute("EXEC sp_LikePost %s, %s", [request.user.user_id, post_id])
+                messages.success(request, "Post liked successfully!")
+        except Exception as e:
+            # Check if the error is due to already liking the post
+            if "User has already liked this post" in str(e):
+                # Unlike the post by deleting the like
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "DELETE FROM Likes WHERE user_id = %s AND post_id = %s",
+                        [request.user.user_id, post_id]
+                    )
+                    messages.success(request, "Post unliked")
+            else:
+                messages.error(request, f"Error: {str(e)}")
+
+        # Handle AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT COUNT(*) FROM Likes WHERE post_id = %s",
+                    [post_id]
+                )
+                like_count = cursor.fetchone()[0]
+                cursor.execute(
+                    "SELECT 1 FROM Likes WHERE user_id = %s AND post_id = %s",
+                    [request.user.user_id, post_id]
+                )
+                is_liked = bool(cursor.fetchone())
+                return JsonResponse({
+                    'success': True,
+                    'like_count': like_count,
+                    'is_liked': is_liked
+                })
+        
+        return redirect(request.META.get('HTTP_REFERER', 'home'))
+    
+    return redirect('home')

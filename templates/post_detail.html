@@ -1,45 +1,40 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<div class="container mt-4">
-    <div class="card mb-4">
-        {% if post.image_url %}
-        <img src="{{ post.image_url }}" class="card-img-top" alt="Post image">
-        {% endif %}
-        <div class="card-body">
-            <div class="post-header mb-3">
-                <img src="{{ post.picture_url|default:'/static/images/default-profile.png' }}" 
-                     class="rounded-circle" width="40" height="40">
-                <a href="{% url 'profile' post.username %}" class="ml-2">{{ post.full_name }}</a>
-            </div>
-            <p class="card-text">{{ post.content }}</p>
-            <div class="post-stats mb-3">
-                <span class="text-muted">{{ post.like_count }} likes</span>
-                <span class="text-muted">{{ post.comment_count }} comments</span>
-                <span class="text-muted">{{ post.created_at|date:"F j, Y" }}</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Comments</h5>
-        </div>
-        <div class="card-body">
-            {% for comment in comments %}
-            <div class="comment mb-3">
-                <div class="d-flex align-items-center mb-2">
-                    <img src="{{ comment.picture_url|default:'/static/images/default-profile.png' }}" 
-                         class="rounded-circle mr-2" width="32" height="32">
-                    <strong>{{ comment.full_name }}</strong>
-                    <small class="text-muted ml-2">{{ comment.created_at|timesince }} ago</small>
-                </div>
-                <p>{{ comment.content }}</p>
-            </div>
-            {% empty %}
-            <p>No comments yet.</p>
-            {% endfor %}
-        </div>
-    </div>
+<div class="post-actions mb-3">
+    <form action="{% url 'posts:like' post.post_id %}" method="post" class="like-form d-inline" data-post-id="{{ post.post_id }}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-{% if post.is_liked %}danger{% else %}outline-danger{% endif %}" id="like-btn-{{ post.post_id }}">
+            {% if post.is_liked %}Unlike{% else %}Like{% endif %} (<span id="like-count-{{ post.post_id }}">{{ post.like_count }}</span>)
+        </button>
+    </form>
 </div>
-{% endblock %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('.like-form').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var postId = form.data('post-id');
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $('#like-count-' + postId).text(response.like_count);
+                    var btn = $('#like-btn-' + postId);
+                    if (response.is_liked) {
+                        btn.removeClass('btn-outline-danger').addClass('btn-danger').text('Unlike (' + response.like_count + ')');
+                    } else {
+                        btn.removeClass('btn-danger').addClass('btn-outline-danger').text('Like (' + response.like_count + ')');
+                    }
+                }
+            },
+            error: function(xhr) {
+                alert('Error: ' + xhr.responseJSON.message || 'An error occurred');
+            }
+        });
+    });
+});
+</script>

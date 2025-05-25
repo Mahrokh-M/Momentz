@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Post by {{ post.username }}{% endblock %}
+
+{% block content %}
+<div class="post-detail">
+    <div class="card mb-4">
+        {% if post.image_url %}
+        <img src="{{ post.image_url }}" class="card-img-top" alt="Post image">
+        {% endif %}
+        <div class="card-body">
+            <div class="post-header mb-3">
+                <img src="{{ post.picture_url|default:'/static/images/default-profile.png' }}" 
+                     class="rounded-circle" width="40" height="40">
+                <a href="{% url 'users:profile' post.username %}" class="ml-2">{{ post.username }}</a>
+            </div>
+            <p class="card-text">{{ post.content }}</p>
+            <div class="post-stats mb-3">
+                <span class="text-muted" id="like-count-{{ post.post_id }}">{{ post.like_count }} likes</span>
+                <span class="text-muted" id="comment-count">{{ post.comment_count }} comments</span>
+                <span class="text-muted">{{ post.created_at|date:"F j, Y" }}</span>
+            </div>
+            <div class="post-actions mb-3">
+                <form action="{% url 'posts:like' post.post_id %}" method="post" class="like-form d-inline" data-post-id="{{ post.post_id }}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-{% if post.is_liked %}danger{% else %}outline-danger{% endif %}" id="like-btn-{{ post.post_id }}">
+                        {% if post.is_liked %}Unlike{% else %}Like{% endif %} (<span id="like-count-{{ post.post_id }}">{{ post.like_count }}</span>)
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="comments-section">
+        <h5>Comments (<span id="comment-count">{{ post.comment_count }}</span>)</h5>
+        
+        <form method="post" action="{% url 'posts:comment' post.post_id %}" class="comment-form mb-4" data-post-id="{{ post.post_id }}">
+            {% csrf_token %}
+            <div class="form-group">
+                <textarea name="content" class="form-control" rows="2" placeholder="Add a comment..." required maxlength="500"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm" id="comment-submit-btn">Post Comment</button>
+            <div id="comment-error" class="text-danger mt-2" style="display: none;"></div>
+        </form>
+        
+        <div id="comments-list">
+            {% for comment in comments %}
+            <div class="comment mb-3" data-comment-id="{{ comment.comment_id }}">
+                <div class="comment-header">
+                    <img src="{{ comment.picture_url|default:'/static/images/default-profile.png' }}" 
+                         class="rounded-circle" width="30" height="30">
+                    <a href="{% url 'users:profile' comment.username %}" class="ml-2">{{ comment.username }}</a>
+                    <small class="text-muted ml-2">{{ comment.created_at|timesince }} ago</small>
+                </div>
+                <div class="comment-body ml-4 mt-2">
+                    <p>{{ comment.content }}</p>
+                    {% if comment.parent_comment_id %}
+                    <small class="text-muted">Replying to comment {{ comment.parent_comment_id }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p id="no-comments">No comments yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('.like-form').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var postId = form.data('post-id');
+        var button = $('#like-btn-' + postId);
+        button.prop('disabled', true).text('Loading...');
+
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $('#like-count-' + postId).text(response.like_count);
+                    if (response.is_liked) {
+                        button.removeClass('btn-outline-danger').addClass('btn-danger').text('Unlike (' + response.like_count + ')');
+                    } else {
+                        button.removeClass('btn-danger').addClass('btn-outline-danger').text('Like (' + response.like_count + ')');
+                    }
+                }
+            },
+            error: function(xhr) {
+                $('#comment-error').text(xhr.responseJSON.message || 'An error occurred').show();
+            },
+            complete: function() {
+                button.prop('disabled', false);
+            }
+        });
+    });
+
+    $('.comment-form').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var postId = form.data('post-id');
+        var button = $('#comment-submit-btn');
+        button.prop('disabled', true).text('Posting...');
+        $('#comment-error').hide();
+
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    var comment = response.comment;
+                    var commentHtml = `
+                        <div class="comment mb-3" data-comment-id="${comment.comment_id}">
+                            <div class="comment-header">
+                                <img src="${comment.picture_url}" class="rounded-circle" width="30" height="30">
+                                <a href="{% url 'users:profile' comment.username %}" class="ml-2">${comment.username}</a>
+                                <small class="text-muted ml-2">Just now</small>
+                            </div>
+                            <div class="comment-body ml-4 mt-2">
+                                <p>${comment.content}</p>
+                                ${comment.parent_comment_id ? '<small class="text-muted">Replying to comment ' + comment.parent_comment_id + '</small>' : ''}
+                            </div>
+                        </div>
+                    `;
+                    if ($('#no-comments').length) {
+                        $('#no-comments').remove();
+                    }
+                    $('#comments-list').prepend(commentHtml);
+                    $('#comment-count').text(response.comment_count);
+                    form.find('textarea').val('');
+                } else {
+                    $('#comment-error').text(response.message).show();
+                }
+            },
+            error: function(xhr) {
+                $('#comment-error').text(xhr.responseJSON.message || 'An error occurred').show();
+            },
+            complete: function() {
+                button.prop('disabled', false).text('Post Comment');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

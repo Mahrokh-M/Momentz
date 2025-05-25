@@ -2,12 +2,10 @@ from django.shortcuts import render, redirect
 from django.db import connection
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse
+from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from .models import User
-
 
 @login_required
 def home(request):
@@ -86,6 +84,7 @@ def profile(request, username):
 
             profile = dict(zip(columns, profile_data))
 
+
             # Check if current user follows this profile
             cursor.execute(
                 "SELECT dbo.IsFollowing(%s, %s) AS is_following",
@@ -98,7 +97,8 @@ def profile(request, username):
                 """
                 SELECT P.post_id, P.content, P.image_url, P.created_at,
                        (SELECT COUNT(*) FROM Likes L WHERE L.post_id = P.post_id) AS like_count,
-                       (SELECT COUNT(*) FROM Comments C WHERE C.post_id = P.post_id) AS comment_count
+                       (SELECT COUNT(*) FROM Comments C WHERE C.post_id = P.post_id) AS comment_count,
+                       (SELECT 1 FROM Likes L WHERE L.post_id = P.post_id AND L.user_id = %s) AS is_liked
                 FROM Posts P
                 WHERE P.user_id = %s
                 ORDER BY P.created_at DESC
@@ -124,7 +124,7 @@ def login_view(request):
         password = request.POST.get("password")
 
         try:
-            user = User.objects.get(username=username)  # Check username only
+            user = User.objects.get(username=username)
             if user.check_password(password):
                 auth_login(request, user, backend="users.auth.SQLServerAuthBackend")
                 return redirect("home")
@@ -277,7 +277,17 @@ def create_post(request):
             return render(request, "users/create_post.html")
 
         try:
+            # Validate user_id
             with connection.cursor() as cursor:
+                cursor.execute("SELECT 1 FROM Users WHERE user_id = %s", [request.user.user_id])
+                if not cursor.fetchone():
+                    messages.error(request, f"Invalid user_id: {request.user.user_id}")
+                    return render(request, "create_post.html", {
+                        'content': content,
+                        'image_url': image_url
+                    })
+                
+                # Insert post
                 cursor.execute(
                     "INSERT INTO Posts (user_id, content, image_url, created_at) "
                     "VALUES (%s, %s, %s, GETDATE())",
