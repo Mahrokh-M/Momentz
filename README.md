@@ -111,8 +111,6 @@ To experience the Momentz homepage with its dynamic particle background:
 
   ![dashboard3](https://github.com/user-attachments/assets/43f5bb3f-ca20-4044-8991-2a7e5ed8e4c9)
 
-  ![dashboard4](https://github.com/user-attachments/assets/ccef343c-f6ff-42a0-9ba9-7df8c4b1ba12)
-
   ![dashboard5](https://github.com/user-attachments/assets/cf2f2617-79e9-44cf-9e7a-c357fb934106)
 
   ![post](https://github.com/user-attachments/assets/327cac2f-711d-430f-a948-01de2df63297)
