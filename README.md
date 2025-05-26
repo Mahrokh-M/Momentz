@@ -1,4 +1,4 @@
-![homepage](https://github.com/user-attachments/assets/371d3eda-64e3-417c-9f77-090245bb4e78)# Momentz
+# Momentz
 
 Momentz is a Django-based web application for capturing and sharing favorite moments through photos and text. Connect with others through following, liking posts, and real-time chat, all within a vibrant neon-themed interface featuring a dynamic mouse-following particle background.
 
