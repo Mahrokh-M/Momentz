@@ -1,4 +1,4 @@
-# Momentz
+![homepage](https://github.com/user-attachments/assets/371d3eda-64e3-417c-9f77-090245bb4e78)# Momentz
 
 Momentz is a Django-based web application for capturing and sharing favorite moments through photos and text. Connect with others through following, liking posts, and real-time chat, all within a vibrant neon-themed interface featuring a dynamic mouse-following particle background.
 
@@ -90,30 +90,35 @@ To experience the Momentz homepage with its dynamic particle background:
   Below is a demo GIF iterating through Momentz’s key features, followed by static screenshots for reference:
 
 - **Homepage**:  
-  ![Homepage Screenshot](screenshots/homepage.gif)
+![homepage](https://github.com/user-attachments/assets/ded2da10-ae33-466e-ad0e-069cef0f7683)
+
 
 - **App Demo**:  
-  ![Momentz Demo](screenshots/momentz-demo.gif)
+![demo](https://github.com/user-attachments/assets/85c285e2-cbdb-4869-a920-e34226673137)
+
 
 - **Login**:  
-  ![Login Screenshot](screenshots/homepage.png)
-  
-- **Register**:  
-  ![Register Screenshot](screenshots/register.png)
+  ![login](https://github.com/user-attachments/assets/5118e634-2b67-43d6-9752-ca1e95247a3c)
+
+- **Register**:
+  ![register](https://github.com/user-attachments/assets/8dee6aeb-7edb-4d84-9097-3f21a31f335d)
 
 - **User Dashboard**:  
-  ![Dashboard Screenshot](screenshots/dashboard1.png)
-  
-  ![Dashboard Screenshot](screenshots/dashboard2.png)
-  
-  ![Dashboard Screenshot](screenshots/dashboard3.png)
-  
-  ![Dashboard Screenshot](screenshots/dashboard4.png)
-  
-  ![Dashboard Screenshot](screenshots/dashboard5.png)
 
-- **Chat Interface**:  
-  ![Chat Screenshot](screenshots/chat.png)
+  ![dashboard1](https://github.com/user-attachments/assets/c8686e0b-2ed9-4dad-b46a-5efde50e6f9c)
+
+  ![dashboard2](https://github.com/user-attachments/assets/87a22287-3040-4162-b2fe-bde8aba71785)
+
+  ![dashboard3](https://github.com/user-attachments/assets/43f5bb3f-ca20-4044-8991-2a7e5ed8e4c9)
+
+  ![dashboard4](https://github.com/user-attachments/assets/ccef343c-f6ff-42a0-9ba9-7df8c4b1ba12)
+
+  ![dashboard5](https://github.com/user-attachments/assets/cf2f2617-79e9-44cf-9e7a-c357fb934106)
+
+  ![post](https://github.com/user-attachments/assets/327cac2f-711d-430f-a948-01de2df63297)
+
+- **Chat Interface**:
+  ![chat](https://github.com/user-attachments/assets/16ca2833-d8c0-46f4-bbef-62d637755580)
 
 
   
